@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>角色 CSS / 测试标签生成器 v13 Supabase</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;
+      --accent:#4f46e5;--accent-soft:#eef2ff;--danger:#dc2626;--danger-soft:#fef2f2;
+      --shadow:0 10px 30px rgba(15,23,42,.08);--radius:18px
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+      background:linear-gradient(180deg,#f8faff 0%,var(--bg) 100%);color:var(--text)}
+    button,input,select,textarea{font:inherit}
+    code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+    .wrap{max-width:1400px;margin:0 auto;padding:28px 20px 52px}
+    .hero{padding:24px 26px;background:linear-gradient(135deg,#fff 0%,#f3f4ff 100%);
+      border:1px solid #e8e9ff;border-radius:24px;box-shadow:var(--shadow);margin-bottom:20px}
+    h1{margin:0 0 8px;font-size:28px}.desc{margin:0;color:var(--muted);line-height:1.75}
+    .layout{display:grid;grid-template-columns:450px minmax(0,1fr);gap:20px;align-items:start}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .panel-hd{padding:18px 20px;border-bottom:1px solid var(--line);font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .panel-bd{padding:20px}.field{margin-bottom:16px}
+    label{display:block;font-size:13px;font-weight:800;margin:0 0 7px}
+    input,select,textarea{width:100%;border:1px solid #d7dce5;border-radius:11px;padding:11px 12px;color:var(--text);background:#fff;outline:none;transition:.18s ease}
+    input:focus,select:focus,textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}.two{display:grid;grid-template-columns:1fr 120px;gap:10px}
+    .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px}
+    button{border:0;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer;transition:.18s ease}
+    button:hover{transform:translateY(-1px)}.primary{background:var(--accent);color:#fff}.ghost{background:#f3f4f6;color:#374151}
+    .danger{background:var(--danger-soft);color:var(--danger)}.mini{padding:7px 9px;font-size:12px}
+    .status{min-height:20px;margin-top:10px;font-size:12px;color:#059669}
+    details{margin-top:18px;border-top:1px solid var(--line);padding-top:16px} summary{cursor:pointer;font-size:13px;font-weight:800}
+    .memory-box{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:#fafbff;margin:2px 0 16px}
+    .memory-box .txt{min-width:0}.memory-box .title{font-size:13px;font-weight:800}.memory-box .sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
+    .preset-box{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 13px;margin:0 0 16px}
+    .preset-title{font-size:13px;font-weight:800;margin-bottom:7px}
+    .preset-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+    .preset-row.three{grid-template-columns:minmax(0,1fr) auto auto}
+    .preset-row input,.preset-row select{padding:9px 10px;font-size:12px}
+    .preset-info{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+    .file-input{display:none}
+    .cloud-box{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
+    .cloud-title{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;font-weight:800;margin-bottom:8px}
+    .cloud-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+    .cloud-grid.three{grid-template-columns:minmax(0,1fr) auto auto}
+    .cloud-grid input,.cloud-grid select{padding:9px 10px;font-size:12px}
+    .cloud-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+    .cloud-status{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55;word-break:break-word}
+    .tiny-check{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);margin-top:8px;cursor:pointer}
+    .tiny-check input{width:auto;box-shadow:none}
+    .cloud-ok{color:#059669}.cloud-error{color:#dc2626}
+    .top-tools{margin:0 0 20px}
+    .top-tools .panel-bd{padding:18px 20px}
+    .top-tools-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+    .top-tool-block{min-width:0}
+    .top-tool-block + .top-tool-block{border-left:1px solid var(--line);padding-left:18px}
+    .top-tool-title{font-size:14px;font-weight:800;margin-bottom:8px}
+    .top-tool-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+    @media(max-width:900px){
+      .top-tools-grid{grid-template-columns:1fr}
+      .top-tool-block + .top-tool-block{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:16px}
+    }
+    .switch{position:relative;display:inline-block;width:46px;height:26px;flex:0 0 auto}.switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s}
+    .slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .switch input:checked + .slider{background:var(--accent)}.switch input:checked + .slider:before{transform:translateX(20px)}
+    .mapping-head,.map-row{display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,1fr) 64px;gap:8px;align-items:center}
+    .mapping-head{color:var(--muted);font-size:11px;font-weight:800;padding:12px 1px 6px}.mapping{display:grid;gap:8px}
+    .map-row{padding:6px;border:1px solid transparent;border-radius:10px}.map-row.off{background:#f8fafc;opacity:.62}
+    .map-row input[type="text"]{padding:8px 9px;font-size:12px}.map-row .switch{width:40px;height:22px}.map-row .slider:before{width:16px;height:16px;top:3px;left:3px}.map-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .cg-row{display:grid;grid-template-columns:56px 82px minmax(0,1fr);gap:8px;align-items:center;margin-top:8px;padding:6px;border-radius:10px}
+    .cg-row.off{background:#f8fafc;opacity:.62}.cg-row span{font:12px Consolas,monospace;color:#374151}.cg-row input[type="text"]{padding:8px 9px;font-size:12px}
+    .cg-row .switch{width:40px;height:22px}.cg-row .slider:before{width:16px;height:16px;top:3px;left:3px}.cg-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .ring-box{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+    .ring-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:12px;font-weight:800}
+    .ring-row{display:grid;grid-template-columns:56px 82px minmax(0,1fr);gap:8px;align-items:center;margin-top:8px;padding:6px;border-radius:10px}
+    .ring-row.off{background:#f8fafc;opacity:.62}
+    .ring-row span{font:12px Consolas,monospace;color:#374151}
+    .ring-row input[type="text"],.ring-row select{padding:8px 9px;font-size:12px}
+    .ring-row .switch{width:40px;height:22px}.ring-row .slider:before{width:16px;height:16px;top:3px;left:3px}.ring-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .ring-color-dot{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.1);box-shadow:0 0 8px rgba(0,0,0,.08);display:inline-block;vertical-align:middle;margin-right:6px}
+    .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:11px;padding:10px 12px;font-size:12px;line-height:1.6;margin-top:12px}
+    .code{width:100%;min-height:330px;resize:vertical;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12.5px;line-height:1.65;background:#0f172a;color:#e2e8f0;border:0;border-radius:13px;padding:16px;white-space:pre;overflow:auto}
+    .html-code{min-height:255px;background:#172033}.out-title{margin:20px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;font-weight:800}.out-title:first-child{margin-top:0}
+    .badge{font-size:11px;padding:3px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-top:12px}.card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+    .thumb{background:linear-gradient(45deg,#f3f4f6 25%,transparent 25%) 0 0/18px 18px,linear-gradient(45deg,transparent 75%,#f3f4f6 75%) 0 0/18px 18px,linear-gradient(45deg,transparent 75%,#f3f4f6 75%) 9px -9px/18px 18px,linear-gradient(45deg,#f3f4f6 25%,#fff 25%) 9px 9px/18px 18px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+    .thumb.expr-thumb{width:100%;aspect-ratio:1/1;border-radius:50%}
+    .thumb.expr-thumb img{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:auto;min-height:100%;object-fit:cover;object-position:50% 0%;display:block}
+    .thumb.cg-thumb{width:100%;aspect-ratio:4/3;border-radius:0}
+    .thumb.cg-thumb img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
+    .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--muted);font-size:12px;background:#fafafa}
+    .meta{padding:10px 11px}.name{font-size:13px;font-weight:800;word-break:break-all}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}}
+    @media(max-width:560px){.mapping-head,.map-row{grid-template-columns:48px 1fr 1fr 54px}.two{grid-template-columns:1fr}.cg-row{grid-template-columns:48px 72px 1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>角色 CSS / HTML 测试标签生成器</h1>
+    <p class="desc">支持自动记忆、字段开关、自定义 expr → 图片尾部映射、CSS / HTML 测试标签生成和图片预览。</p>
+  </section>
+
+
+  <section class="panel top-tools">
+    <div class="panel-hd">
+      <span>预设与云端同步</span>
+      <span class="badge">快捷管理</span>
+    </div>
+    <div class="panel-bd">
+      <div class="top-tools-grid">
+        <div class="top-tool-block">
+          <div class="top-tool-title">预设管理</div>
+          <div class="top-tool-sub">保存、加载、导入或导出当前工具的整套配置。</div>
+
+          <div class="preset-row">
+            <input id="presetName" type="text" placeholder="输入预设名称，例如：天梦姐 dl1">
+            <button class="primary mini" id="savePresetBtn">保存预设</button>
+          </div>
+
+          <div class="preset-row three">
+            <select id="presetSelect">
+              <option value="">暂无已保存预设</option>
+            </select>
+            <button class="ghost mini" id="loadPresetBtn">加载</button>
+            <button class="danger mini" id="deletePresetBtn">删除</button>
+          </div>
+
+          <div class="actions">
+            <button class="ghost mini" id="exportPresetsBtn">导出全部预设</button>
+            <button class="ghost mini" id="importPresetsBtn">导入预设 JSON</button>
+            <input id="importPresetsFile" class="file-input" type="file" accept=".json,application/json">
+          </div>
+
+          <div id="presetInfo" class="preset-info">尚未保存预设。</div>
+        </div>
+
+        <div class="top-tool-block">
+          <div class="top-tool-title">Supabase 云端同步</div>
+          <div class="top-tool-sub">
+            同一个同步码对应一份“全部预设”。内部使用时可自行设置任意非空同步码。
+          </div>
+
+          <div class="cloud-grid">
+            <input id="syncCode" type="password" autocomplete="off" placeholder="输入任意非空同步码">
+            <button class="ghost mini" id="generateSyncCodeBtn">随机生成</button>
+          </div>
+
+          <label class="tiny-check">
+            <input id="showSyncCode" type="checkbox">
+            显示同步码
+          </label>
+
+          <label class="tiny-check">
+            <input id="rememberSyncCode" type="checkbox">
+            在本浏览器记住同步码
+          </label>
+
+          <div class="cloud-grid">
+            <select id="cloudPullMode">
+              <option value="merge" selected>拉取后合并（云端同名覆盖本地）</option>
+              <option value="replace">拉取后完全替换本地</option>
+            </select>
+            <button class="ghost mini" id="pullCloudBtn">从云端拉取</button>
+          </div>
+
+          <div class="cloud-actions">
+            <button class="primary mini" id="pushCloudBtn">上传全部预设到云端</button>
+          </div>
+
+          <div id="cloudStatus" class="cloud-status">
+            请先在 Supabase SQL Editor 执行新版 supabase_css_presets_rpc_setup.sql；GitHub Pages 可直接使用，无需 localhost。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="panel">
+      <div class="panel-hd">生成参数</div>
+      <div class="panel-bd">
+        <div class="memory-box">
+          <div class="txt">
+            <div class="title">自动记忆设置</div>
+            <div class="sub">开启后使用浏览器 localStorage 保存当前参数、字段映射和开关状态。</div>
+          </div>
+          <label class="switch" title="自动记忆">
+            <input id="rememberToggle" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+
+        <div class="field">
+          <label for="char">char</label>
+          <input id="char" value="ylks" placeholder="例如：ylks">
+        </div>
+
+        <div class="field">
+          <label for="form">form（可留空）</label>
+          <input id="form" value="" placeholder="默认留空；需要时再填写，例如 dl1">
+          <div class="hint">留空时，CSS 与 HTML 中都不会生成 form 字段。</div>
+        </div>
+
+        <div class="field">
+          <label for="base">图片链接前缀</label>
+          <input id="base" value="https://file.garden/akbKTTV4MSSQ5dS9/NPC/%E5%A4%A9%E6%A2%A6%E5%A7%90/%E5%A4%A9%E6%A2%A6" placeholder="填写到角色文件名公共部分">
+          <div class="hint">例如填写到 <code>.../天梦</code>，工具会直接拼接 <code>calm.webp</code>。如需要连接符，可直接写在链接前缀末尾或尾部映射开头，工具会原样保留。</div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label for="ext">图片扩展名</label>
+            <select id="ext">
+              <option value="webp" selected>webp</option><option value="png">png</option><option value="jpg">jpg</option><option value="jpeg">jpeg</option><option value="gif">gif</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="important">!important</label>
+            <select id="important"><option value="yes" selected>保留</option><option value="no">不加</option></select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="copyCssBtn">复制 CSS</button>
+          <button class="ghost" id="copyHtmlBtn">复制测试 HTML</button>
+          <button class="ghost" id="downloadBtn">下载 .css</button>
+          <button class="ghost" id="resetBtn">恢复默认</button>
+        </div>
+        <div id="status" class="status"></div>
+
+        <details open>
+          <summary>字段映射与生成开关</summary>
+          <div class="hint">关闭某一字段后，它不会出现在 CSS、HTML 测试标签和图片预览中，但映射内容仍保留。</div>
+
+          <div class="mapping-head"><span>启用</span><span>expr 字段</span><span>链接尾部</span><span></span></div>
+          <div id="mapping" class="mapping"></div>
+
+          <div class="actions"><button class="ghost mini" id="addMapBtn">＋ 新增字段</button></div>
+
+          <div class="note">CG 也可单独关闭。climax CSS 仍保持原逻辑：<code>:not([type="oral"])</code>。</div>
+
+          <div id="oralRow" class="cg-row">
+            <label class="switch" title="启用 oral"><input id="oralEnabled" type="checkbox" checked><span class="slider"></span></label>
+            <span>oral →</span><input id="oralSuffix" type="text" value="oral" placeholder="oral">
+          </div>
+
+          <div id="climaxRow" class="cg-row">
+            <label class="switch" title="启用 climax"><input id="climaxEnabled" type="checkbox" checked><span class="slider"></span></label>
+            <span>climax →</span><input id="climaxSuffix" type="text" value="climax" placeholder="climax">
+          </div>
+
+          <div class="ring-box">
+            <div class="ring-title">
+              <span>魂环</span>
+              <span class="badge">默认关闭</span>
+            </div>
+            <div class="hint">
+              开启后生成 <code>[ring="当前 char"]</code> 的魂环 CSS。名称与图片尾部默认均为 <code>huan</code>。
+            </div>
+
+            <div id="ringRow" class="ring-row off">
+              <label class="switch" title="启用魂环">
+                <input id="ringEnabled" type="checkbox">
+                <span class="slider"></span>
+              </label>
+              <span>名称 →</span>
+              <input id="ringKey" type="text" value="huan" placeholder="huan">
+            </div>
+
+            <div class="ring-row">
+              <span></span>
+              <span>图片 →</span>
+              <input id="ringSuffix" type="text" value="huan" placeholder="huan">
+            </div>
+
+            <div class="ring-row">
+              <span></span>
+              <span>发光色 →</span>
+              <select id="ringColor">
+                <option value="pink" selected>粉色 Pink</option>
+                <option value="red">红色 Red</option>
+                <option value="orange">橙色 Orange</option>
+                <option value="yellow">黄色 Yellow</option>
+                <option value="green">绿色 Green</option>
+                <option value="cyan">青色 Cyan</option>
+                <option value="blue">蓝色 Blue</option>
+                <option value="purple">紫色 Purple</option>
+                <option value="white">白色 White</option>
+                <option value="gold">金色 Gold</option>
+              </select>
+            </div>
+          </div>
+        </details>
+      </div>
+    </aside>
+
+    <main class="panel">
+      <div class="panel-hd"><span>实时生成结果</span><span class="badge" id="countBadge">0 条 CSS</span></div>
+      <div class="panel-bd">
+        <div class="out-title"><span>完整 CSS</span><span class="badge">自动更新</span></div>
+        <textarea id="cssOutput" class="code" readonly spellcheck="false"></textarea>
+
+        <div class="out-title"><span>HTML 测试标签</span><span class="badge">可直接复制</span></div>
+        <textarea id="htmlOutput" class="code html-code" readonly spellcheck="false"></textarea>
+
+        <div class="out-title"><span>表情图片预览</span><span class="badge">nport</span></div>
+        <div id="exprPreview" class="grid"></div>
+
+        <div class="out-title"><span>CG 图片预览</span><span class="badge">cg</span></div>
+        <div id="cgPreview" class="grid"></div>
+
+        <div class="out-title"><span>魂环图片预览</span><span class="badge">ring</span></div>
+        <div id="ringPreview" class="grid"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "character_css_generator_v3_settings";
+  const PRESETS_KEY = "character_css_generator_v10_presets";
+  const SYNC_CODE_KEY = "character_css_generator_v11_sync_code";
+  const SUPABASE_URL = "https://lewrdssfaziuwukugzlz.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_QVsFpzJbK4EJzDaMmIIXSQ_YsdOzyFF";
+
+  const defaultMappings = [
+    {enabled:true, field:"calm", suffix:"calm"},
+    {enabled:true, field:"angry", suffix:"angry"},
+    {enabled:true, field:"happy", suffix:"happy"},
+    {enabled:true, field:"shy", suffix:"shy"},
+    {enabled:true, field:"awkward", suffix:"awkward"},
+    {enabled:true, field:"surprise", suffix:"surprise"},
+    {enabled:true, field:"cry", suffix:"cry"},
+    {enabled:true, field:"confused", suffix:"confused"},
+    {enabled:true, field:"touched", suffix:"touched"},
+    {enabled:true, field:"battle-calm", suffix:"battle-calm"},
+    {enabled:true, field:"battle-urgent", suffix:"battle-calm"},
+    {enabled:true, field:"hurt", suffix:"hurt"}
+  ];
+
+  const defaults = {
+    char:"ylks",
+    form:"",
+    base:"https://file.garden/akbKTTV4MSSQ5dS9/NPC/%E5%A4%A9%E6%A2%A6%E5%A7%90/%E5%A4%A9%E6%A2%A6",
+    ext:"webp",
+    important:"yes",
+    mappings:defaultMappings,
+    oralEnabled:true,
+    oralSuffix:"oral",
+    climaxEnabled:true,
+    climaxSuffix:"climax",
+    ringEnabled:false,
+    ringKey:"huan",
+    ringSuffix:"huan",
+    ringColor:"pink"
+  };
+
+  let mappings = defaultMappings.map(x => ({...x}));
+  const $ = id => document.getElementById(id);
+
+  const rememberToggle = $("rememberToggle"),
+        presetName = $("presetName"), presetSelect = $("presetSelect"), presetInfo = $("presetInfo"), importPresetsFile = $("importPresetsFile"),
+        syncCode = $("syncCode"), showSyncCode = $("showSyncCode"), rememberSyncCode = $("rememberSyncCode"),
+        cloudPullMode = $("cloudPullMode"), cloudStatus = $("cloudStatus"),
+        charInput = $("char"), formInput = $("form"), baseInput = $("base"),
+        extInput = $("ext"), importantInput = $("important"), oralEnabled = $("oralEnabled"), oralSuffix = $("oralSuffix"),
+        climaxEnabled = $("climaxEnabled"), climaxSuffix = $("climaxSuffix"),
+        ringEnabled = $("ringEnabled"), ringKey = $("ringKey"), ringSuffix = $("ringSuffix"), ringColor = $("ringColor"),
+        cssOutput = $("cssOutput"), htmlOutput = $("htmlOutput"),
+        mappingBox = $("mapping"), exprPreview = $("exprPreview"), cgPreview = $("cgPreview"), ringPreview = $("ringPreview"), status = $("status");
+
+  function escAttr(v){ return String(v).replace(/\\/g,"\\\\").replace(/"/g,'\\"'); }
+  function escHtmlAttr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function cleanBase(){ return baseInput.value.trim(); }
+  function cleanSuffix(v){ return String(v || "").trim(); }
+  function buildUrl(suffix){ return `${cleanBase()}${cleanSuffix(suffix)}.${extInput.value}`; }
+  function cssUrl(url){ return url.replace(/'/g,"%27"); }
+  function cssFormPart(){ const f=formInput.value.trim(); return f ? `[form="${escAttr(f)}"]` : ""; }
+  function htmlFormPart(){ const f=formInput.value.trim(); return f ? ` form="${escHtmlAttr(f)}"` : ""; }
+  function makeRule(selector,url){ const imp=importantInput.value==="yes"?"!important":""; return `${selector}{background-image:url('${cssUrl(url)}')${imp}}`; }
+  function activeMappings(){ return mappings.filter(m => m.enabled && m.field.trim() && m.suffix.trim()); }
+
+  const ringColors = {
+    pink:   {label:"pink",   rgb:"255, 182, 193"},
+    red:    {label:"red",    rgb:"255, 99, 99"},
+    orange: {label:"orange", rgb:"255, 165, 0"},
+    yellow: {label:"yellow", rgb:"255, 215, 0"},
+    green:  {label:"green",  rgb:"76, 175, 80"},
+    cyan:   {label:"cyan",   rgb:"0, 188, 212"},
+    blue:   {label:"blue",   rgb:"66, 133, 244"},
+    purple: {label:"purple", rgb:"156, 39, 176"},
+    white:  {label:"white",  rgb:"255, 255, 255"},
+    gold:   {label:"gold",   rgb:"255, 193, 7"}
+  };
+
+  function safeCssName(v){
+    const s=String(v||"huan").trim().toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"");
+    return s || "huan";
+  }
+
+  function buildRingCSS(){
+    if(!ringEnabled.checked) return "";
+    const c=escAttr(charInput.value.trim());
+    const preset=ringColors[ringColor.value] || ringColors.pink;
+    const animationName=`ring-pulse-${preset.label}`;
+    const imp=importantInput.value==="yes" ? " !important" : "";
+    const url=cssUrl(buildUrl(ringSuffix.value));
+
+    return `[ring="${c}"] {
+  animation-name: ${animationName};
+  border-color: rgba(${preset.rgb}, 0.4);
+  background-image: url('${url}')${imp};
+}
+
+@keyframes ${animationName} {
+  0%, 100% {
+    box-shadow:
+      0 0 6px 1px rgba(${preset.rgb}, 0.3),
+      0 0 12px 2px rgba(${preset.rgb}, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 16px 5px rgba(${preset.rgb}, 0.6),
+      0 0 30px 10px rgba(${preset.rgb}, 0.25);
+  }
+}`;
+  }
+
+  function getState(){
+    return {
+      char:charInput.value, form:formInput.value, base:baseInput.value, ext:extInput.value, important:importantInput.value,
+      mappings:mappings.map(x=>({...x})), oralEnabled:oralEnabled.checked, oralSuffix:oralSuffix.value,
+      climaxEnabled:climaxEnabled.checked, climaxSuffix:climaxSuffix.value,
+      ringEnabled:ringEnabled.checked, ringKey:ringKey.value, ringSuffix:ringSuffix.value, ringColor:ringColor.value
+    };
+  }
+
+  function getPresets(){
+    try{
+      const raw=localStorage.getItem(PRESETS_KEY);
+      if(!raw) return {};
+      const data=JSON.parse(raw);
+      return data && typeof data==="object" && !Array.isArray(data) ? data : {};
+    }catch(e){ return {}; }
+  }
+
+  function setPresets(data){
+    try{
+      localStorage.setItem(PRESETS_KEY,JSON.stringify(data));
+      return true;
+    }catch(e){
+      status.textContent="保存预设失败：浏览器本地存储不可用或空间不足。";
+      return false;
+    }
+  }
+
+  function renderPresetList(selected=""){
+    const presets=getPresets();
+    const names=Object.keys(presets).sort((a,b)=>a.localeCompare(b,"zh-CN"));
+    presetSelect.innerHTML="";
+    if(!names.length){
+      const opt=document.createElement("option");
+      opt.value=""; opt.textContent="暂无已保存预设";
+      presetSelect.appendChild(opt);
+      presetInfo.textContent="尚未保存预设。";
+      return;
+    }
+    names.forEach(name=>{
+      const opt=document.createElement("option");
+      opt.value=name; opt.textContent=name;
+      presetSelect.appendChild(opt);
+    });
+    if(selected && presets[selected]) presetSelect.value=selected;
+    presetInfo.textContent=`已保存 ${names.length} 个预设。`;
+  }
+
+  function applyPresetState(s){
+    charInput.value=s.char ?? defaults.char;
+    formInput.value=s.form ?? "";
+    baseInput.value=s.base ?? defaults.base;
+    extInput.value=s.ext ?? "webp";
+    importantInput.value=s.important ?? "yes";
+    mappings=Array.isArray(s.mappings)
+      ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",suffix:m.suffix??""}))
+      : defaultMappings.map(x=>({...x}));
+    oralEnabled.checked=s.oralEnabled!==false;
+    oralSuffix.value=s.oralSuffix ?? "oral";
+    climaxEnabled.checked=s.climaxEnabled!==false;
+    climaxSuffix.value=s.climaxSuffix ?? "climax";
+    ringEnabled.checked=s.ringEnabled===true;
+    ringKey.value=s.ringKey ?? "huan";
+    ringSuffix.value=s.ringSuffix ?? "huan";
+    ringColor.value=ringColors[s.ringColor] ? s.ringColor : "pink";
+    renderMapping();
+    update();
+  }
+
+  function saveNamedPreset(){
+    const name=presetName.value.trim();
+    if(!name){
+      status.textContent="请先输入预设名称。";
+      presetName.focus();
+      return;
+    }
+    const presets=getPresets();
+    const existed=Object.prototype.hasOwnProperty.call(presets,name);
+    presets[name]={version:1,savedAt:new Date().toISOString(),settings:getState()};
+    if(setPresets(presets)){
+      renderPresetList(name);
+      status.textContent=existed ? `已覆盖更新预设：${name}` : `已保存预设：${name}`;
+    }
+  }
+
+  function loadNamedPreset(){
+    const name=presetSelect.value;
+    if(!name){ status.textContent="暂无可加载的预设。"; return; }
+    const item=getPresets()[name];
+    if(!item){ renderPresetList(); status.textContent="未找到该预设。"; return; }
+    applyPresetState(item.settings || item);
+    presetName.value=name;
+    status.textContent=`已加载预设：${name}`;
+  }
+
+  function deleteNamedPreset(){
+    const name=presetSelect.value;
+    if(!name){ status.textContent="暂无可删除的预设。"; return; }
+    const presets=getPresets();
+    if(!presets[name]){ renderPresetList(); return; }
+    delete presets[name];
+    if(setPresets(presets)){
+      renderPresetList();
+      if(presetName.value.trim()===name) presetName.value="";
+      status.textContent=`已删除预设：${name}`;
+    }
+  }
+
+  function exportAllPresets(){
+    const presets=getPresets();
+    const names=Object.keys(presets);
+    if(!names.length){ status.textContent="当前没有已保存的预设可导出。"; return; }
+    const payload={format:"character-css-generator-presets",version:1,exportedAt:new Date().toISOString(),presets};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="character-css-generator-presets.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    status.textContent=`已导出 ${names.length} 个预设。`;
+  }
+
+  async function importPresetFile(file){
+    if(!file) return;
+    try{
+      const data=JSON.parse(await file.text());
+      let incoming=null;
+      if(data && data.format==="character-css-generator-presets" && data.presets && typeof data.presets==="object") incoming=data.presets;
+      else if(data && typeof data==="object" && !Array.isArray(data)) incoming=data;
+      if(!incoming) throw new Error("bad format");
+
+      const current=getPresets();
+      let added=0,replaced=0;
+      Object.entries(incoming).forEach(([name,item])=>{
+        if(!name || !item || typeof item!=="object") return;
+        if(Object.prototype.hasOwnProperty.call(current,name)) replaced++; else added++;
+        current[name]=item.settings ? item : {version:1,savedAt:new Date().toISOString(),settings:item};
+      });
+      if(!setPresets(current)) return;
+      renderPresetList();
+      status.textContent=`导入完成：新增 ${added} 个，覆盖同名 ${replaced} 个。`;
+    }catch(e){
+      status.textContent="导入失败：请选择本工具导出的预设 JSON 文件。";
+    }finally{
+      importPresetsFile.value="";
+    }
+  }
+
+  async function sha256Hex(text){
+    if(!window.crypto || !window.crypto.subtle){
+      throw new Error("当前浏览器不支持 Web Crypto，无法安全生成同步码哈希。");
+    }
+    const data=new TextEncoder().encode(text);
+    const digest=await crypto.subtle.digest("SHA-256",data);
+    return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+
+  function validateSyncCode(){
+    const code=syncCode.value.trim();
+    if(!code) throw new Error("请输入同步码。");
+    return code;
+  }
+
+  function setCloudStatus(message,type=""){
+    cloudStatus.textContent=message;
+    cloudStatus.classList.remove("cloud-ok","cloud-error");
+    if(type==="ok") cloudStatus.classList.add("cloud-ok");
+    if(type==="error") cloudStatus.classList.add("cloud-error");
+  }
+
+  function randomSyncCode(){
+    if(!window.crypto || !window.crypto.getRandomValues) throw new Error("无法生成安全随机数");
+    const bytes=new Uint8Array(18);
+    crypto.getRandomValues(bytes);
+    const s=Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("").toUpperCase();
+    return `CSS-${s.slice(0,8)}-${s.slice(8,16)}-${s.slice(16,24)}-${s.slice(24)}`;
+  }
+
+  function saveRememberedSyncCode(){
+    try{
+      if(rememberSyncCode.checked && syncCode.value.trim()) localStorage.setItem(SYNC_CODE_KEY,syncCode.value.trim());
+      else localStorage.removeItem(SYNC_CODE_KEY);
+    }catch(e){}
+  }
+
+  function loadRememberedSyncCode(){
+    try{
+      const saved=localStorage.getItem(SYNC_CODE_KEY);
+      if(saved){ syncCode.value=saved; rememberSyncCode.checked=true; }
+    }catch(e){}
+  }
+
+  async function supabaseAccess(){
+    const code=validateSyncCode();
+    const hash=await sha256Hex(code);
+    return {
+      hash,
+      headers:{
+        "apikey":SUPABASE_PUBLISHABLE_KEY,
+        "Content-Type":"application/json"
+      }
+    };
+  }
+
+  async function supabaseErrorText(res){
+    let detail="";
+    try{
+      const body=await res.json();
+      detail=body.message || body.details || body.hint || JSON.stringify(body);
+    }catch(e){}
+    if(res.status===404) return "找不到云端 RPC。请先执行新版 supabase_css_presets_rpc_setup.sql。";
+    if(res.status===401 || res.status===403) return "Supabase 拒绝访问，请检查新版 RPC SQL 与项目 Publishable Key。";
+    return `Supabase 请求失败（HTTP ${res.status}）${detail ? "：" + detail : ""}`;
+  }
+
+  async function pullCloudPresets(){
+    try{
+      setCloudStatus("正在从云端拉取预设…");
+      saveRememberedSyncCode();
+
+      const {hash,headers}=await supabaseAccess();
+      const url=`${SUPABASE_URL}/rest/v1/rpc/get_css_presets`;
+
+      const res=await fetch(url,{
+        method:"POST",
+        headers,
+        body:JSON.stringify({p_code_hash:hash})
+      });
+
+      if(!res.ok) throw new Error(await supabaseErrorText(res));
+
+      const rows=await res.json();
+
+      if(!Array.isArray(rows) || !rows.length){
+        setCloudStatus("这个同步码还没有云端数据。可以先点击“上传全部预设到云端”。","error");
+        return;
+      }
+
+      const incoming=
+        rows[0].presets &&
+        typeof rows[0].presets==="object" &&
+        !Array.isArray(rows[0].presets)
+          ? rows[0].presets
+          : {};
+
+      if(cloudPullMode.value==="replace"){
+        if(!setPresets(incoming)) return;
+      }else{
+        if(!setPresets({...getPresets(),...incoming})) return;
+      }
+
+      renderPresetList();
+
+      const count=Object.keys(incoming).length;
+      const when=rows[0].updated_at
+        ? new Date(rows[0].updated_at).toLocaleString()
+        : "未知";
+
+      setCloudStatus(`拉取成功：云端 ${count} 个预设；更新时间 ${when}。`,"ok");
+    }catch(e){
+      setCloudStatus(
+        (e && e.message ? e.message : String(e)) +
+        "；如果页面部署在 GitHub Pages，请按 F12 → Network 查看 /rpc/get_css_presets 请求。",
+        "error"
+      );
+    }
+  }
+
+  async function pushCloudPresets(){
+    try{
+      const presets=getPresets();
+      const count=Object.keys(presets).length;
+
+      if(!count){
+        throw new Error("本地没有已保存的命名预设，请先保存至少一个预设。");
+      }
+
+      setCloudStatus(`正在上传 ${count} 个预设…`);
+      saveRememberedSyncCode();
+
+      const {hash,headers}=await supabaseAccess();
+      const url=`${SUPABASE_URL}/rest/v1/rpc/save_css_presets`;
+
+      const res=await fetch(url,{
+        method:"POST",
+        headers,
+        body:JSON.stringify({
+          p_code_hash:hash,
+          p_presets:presets
+        })
+      });
+
+      if(!res.ok) throw new Error(await supabaseErrorText(res));
+
+      const rows=await res.json();
+
+      const when=
+        rows && rows[0] && rows[0].updated_at
+          ? new Date(rows[0].updated_at).toLocaleString()
+          : new Date().toLocaleString();
+
+      setCloudStatus(`上传成功：已同步 ${count} 个预设；${when}。`,"ok");
+    }catch(e){
+      setCloudStatus(
+        (e && e.message ? e.message : String(e)) +
+        "；如果页面部署在 GitHub Pages，请按 F12 → Network 查看 /rpc/save_css_presets 请求。",
+        "error"
+      );
+    }
+  }
+
+  function saveState(){
+    if(!rememberToggle.checked) return;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(getState())); }catch(e){}
+  }
+
+  function loadState(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw) return false;
+      const s=JSON.parse(raw);
+      charInput.value=s.char ?? defaults.char; formInput.value=s.form ?? ""; baseInput.value=s.base ?? defaults.base;
+      extInput.value=s.ext ?? "webp"; importantInput.value=s.important ?? "yes";
+      mappings=Array.isArray(s.mappings) ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",suffix:m.suffix??""})) : defaultMappings.map(x=>({...x}));
+      oralEnabled.checked=s.oralEnabled!==false; oralSuffix.value=s.oralSuffix ?? "oral";
+      climaxEnabled.checked=s.climaxEnabled!==false; climaxSuffix.value=s.climaxSuffix ?? "climax";
+      ringEnabled.checked=s.ringEnabled===true;
+      ringKey.value=s.ringKey ?? "huan";
+      ringSuffix.value=s.ringSuffix ?? "huan";
+      ringColor.value=ringColors[s.ringColor] ? s.ringColor : "pink";
+      return true;
+    }catch(e){ return false; }
+  }
+
+  function clearStored(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+
+  function buildCSS(){
+    const c=escAttr(charInput.value.trim()), form=cssFormPart(), rules=[];
+    activeMappings().forEach(({field,suffix}) => rules.push(makeRule(`nport[char="${c}"]${form}[expr="${escAttr(field.trim())}"]`,buildUrl(suffix))));
+    if(oralEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}[type="oral"]`,buildUrl(oralSuffix.value)));
+    if(climaxEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}:not([type="oral"])`,buildUrl(climaxSuffix.value)));
+    const ringCSS=buildRingCSS();
+    if(ringCSS) rules.push(ringCSS);
+    return rules.join("\n\n");
+  }
+
+  function nportTag(field){
+    const c=escHtmlAttr(charInput.value.trim());
+    return `<nport char="${c}"${htmlFormPart()} expr="${escHtmlAttr(field.trim())}"></nport>`;
+  }
+  function cgTag(type){
+    const c=escHtmlAttr(charInput.value.trim());
+    return `<cg char="${c}"${htmlFormPart()} type="${type}"></cg>`;
+  }
+
+  function buildTestHTML(){
+    const rows=activeMappings(), groups=[], first=rows.slice(0,5), second=rows.slice(5,9), rest=rows.slice(9);
+    if(first.length) groups.push(first); if(second.length) groups.push(second);
+    for(let i=0;i<rest.length;i+=5) groups.push(rest.slice(i,i+5));
+    const lines=["<ntext>"];
+    groups.forEach((group,index)=>{
+      lines.push("<p dlg user>");
+      if(index===0 && ringEnabled.checked) lines.push(`<nring ring="${escHtmlAttr(charInput.value.trim())}"></nring>`);
+      group.forEach(m=>lines.push(nportTag(m.field)));
+      lines.push("</p>");
+    });
+    if(oralEnabled.checked) lines.push(cgTag("oral"));
+    if(climaxEnabled.checked) lines.push(cgTag("climax"));
+    lines.push("</ntext>");
+    return lines.join("\n");
+  }
+
+  function previewCard(label,url,type="expr"){
+    const card=document.createElement("div"); card.className="card";
+    const thumb=document.createElement("div");
+    thumb.className=type==="cg" ? "thumb cg-thumb" : "thumb expr-thumb";
+    const img=document.createElement("img"); img.alt=label; img.loading="lazy"; img.src=url;
+    const fail=document.createElement("div"); fail.className="fail"; fail.textContent="图片加载失败，请检查链接或映射尾部";
+    img.addEventListener("error",()=>{img.style.display="none";fail.style.display="flex"});
+    img.addEventListener("load",()=>{img.style.display="block";fail.style.display="none"});
+    thumb.append(img,fail);
+    const meta=document.createElement("div"); meta.className="meta";
+    const name=document.createElement("div"); name.className="name"; name.textContent=label;
+    meta.append(name); card.append(thumb,meta); return card;
+  }
+
+  function renderMapping(){
+    mappingBox.innerHTML="";
+    mappings.forEach((m,index)=>{
+      const row=document.createElement("div"); row.className="map-row"+(m.enabled?"":" off");
+      const sw=document.createElement("label"); sw.className="switch"; sw.title="是否生成该字段";
+      const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=m.enabled;
+      const slider=document.createElement("span"); slider.className="slider"; sw.append(chk,slider);
+      chk.addEventListener("change",()=>{mappings[index].enabled=chk.checked; row.classList.toggle("off",!chk.checked); update();});
+      const field=document.createElement("input"); field.type="text"; field.value=m.field; field.placeholder="例如 calm";
+      field.addEventListener("input",()=>{mappings[index].field=field.value; update(false);});
+      const suffix=document.createElement("input"); suffix.type="text"; suffix.value=m.suffix; suffix.placeholder="例如 calm";
+      suffix.addEventListener("input",()=>{mappings[index].suffix=suffix.value; update(false);});
+      const del=document.createElement("button"); del.type="button"; del.className="danger mini"; del.textContent="删除";
+      del.addEventListener("click",()=>{mappings.splice(index,1); renderMapping(); update();});
+      row.append(sw,field,suffix,del); mappingBox.appendChild(row);
+    });
+  }
+
+  function renderPreviews(){
+    exprPreview.innerHTML=""; cgPreview.innerHTML=""; ringPreview.innerHTML="";
+    activeMappings().forEach(({field,suffix})=>exprPreview.appendChild(previewCard(`${field} → ${suffix}`,buildUrl(suffix))));
+    if(oralEnabled.checked) cgPreview.appendChild(previewCard(`type="oral" → ${cleanSuffix(oralSuffix.value)}`,buildUrl(oralSuffix.value),"cg"));
+    if(climaxEnabled.checked) cgPreview.appendChild(previewCard(`非 oral → ${cleanSuffix(climaxSuffix.value)}`,buildUrl(climaxSuffix.value),"cg"));
+    if(ringEnabled.checked) ringPreview.appendChild(previewCard(`${ringKey.value.trim() || "huan"} → ${cleanSuffix(ringSuffix.value)}`,buildUrl(ringSuffix.value),"cg"));
+    $("oralRow").classList.toggle("off",!oralEnabled.checked);
+    $("climaxRow").classList.toggle("off",!climaxEnabled.checked);
+    $("ringRow").classList.toggle("off",!ringEnabled.checked);
+  }
+
+  function update(refreshPreview=true){
+    cssOutput.value=buildCSS(); htmlOutput.value=buildTestHTML();
+    const count=activeMappings().length+(oralEnabled.checked?1:0)+(climaxEnabled.checked?1:0)+(ringEnabled.checked?1:0);
+    $("countBadge").textContent=`${count} 条 CSS`;
+    if(refreshPreview) renderPreviews(); else { clearTimeout(update._timer); update._timer=setTimeout(renderPreviews,180); }
+    saveState(); status.textContent="";
+  }
+
+  async function copyText(text,msg){
+    try{ await navigator.clipboard.writeText(text); }
+    catch{ const temp=document.createElement("textarea"); temp.value=text; temp.style.position="fixed"; temp.style.opacity="0"; document.body.appendChild(temp); temp.select(); document.execCommand("copy"); temp.remove(); }
+    status.textContent=msg;
+  }
+
+  rememberToggle.addEventListener("change",()=>{
+    if(rememberToggle.checked){ saveState(); status.textContent="自动记忆已开启，当前设置已保存到此浏览器。"; }
+    else{ clearStored(); status.textContent="自动记忆已关闭，并已清除已保存的设置。"; }
+  });
+
+  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor].forEach(el=>{
+    el.addEventListener("input",()=>update(false)); el.addEventListener("change",()=>update());
+  });
+
+  $("generateSyncCodeBtn").addEventListener("click",()=>{
+    try{
+      syncCode.value=randomSyncCode();
+      saveRememberedSyncCode();
+      setCloudStatus("已生成随机同步码。你也可以改成任意非空自定义同步码。","ok");
+    }catch(e){
+      setCloudStatus(e.message || "无法生成随机同步码。","error");
+    }
+  });
+  $("pullCloudBtn").addEventListener("click",pullCloudPresets);
+  $("pushCloudBtn").addEventListener("click",pushCloudPresets);
+  showSyncCode.addEventListener("change",()=>{ syncCode.type=showSyncCode.checked ? "text" : "password"; });
+  rememberSyncCode.addEventListener("change",saveRememberedSyncCode);
+  syncCode.addEventListener("change",saveRememberedSyncCode);
+
+  $("savePresetBtn").addEventListener("click",saveNamedPreset);
+  $("loadPresetBtn").addEventListener("click",loadNamedPreset);
+  $("deletePresetBtn").addEventListener("click",deleteNamedPreset);
+  $("exportPresetsBtn").addEventListener("click",exportAllPresets);
+  $("importPresetsBtn").addEventListener("click",()=>importPresetsFile.click());
+  importPresetsFile.addEventListener("change",()=>importPresetFile(importPresetsFile.files && importPresetsFile.files[0]));
+  presetName.addEventListener("keydown",e=>{ if(e.key==="Enter") saveNamedPreset(); });
+
+  $("addMapBtn").addEventListener("click",()=>{
+    mappings.push({enabled:true,field:"new-expr",suffix:"new-image"}); renderMapping(); update();
+    const inputs=mappingBox.querySelectorAll('.map-row input[type="text"]'); if(inputs.length>=2){const target=inputs[inputs.length-2];target.focus();target.select();}
+  });
+
+  $("copyCssBtn").addEventListener("click",()=>copyText(cssOutput.value,"已复制完整 CSS。"));
+  $("copyHtmlBtn").addEventListener("click",()=>copyText(htmlOutput.value,"已复制 HTML 测试标签。"));
+
+  $("downloadBtn").addEventListener("click",()=>{
+    const blob=new Blob([cssOutput.value],{type:"text/css;charset=utf-8"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url;a.download=`${charInput.value.trim()||"character"}.css`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    status.textContent="CSS 文件已生成。";
+  });
+
+  $("resetBtn").addEventListener("click",()=>{
+    charInput.value=defaults.char;formInput.value=defaults.form;baseInput.value=defaults.base;extInput.value=defaults.ext;importantInput.value=defaults.important;
+    mappings=defaultMappings.map(x=>({...x}));
+    oralEnabled.checked=true;oralSuffix.value="oral";
+    climaxEnabled.checked=true;climaxSuffix.value="climax";
+    ringEnabled.checked=false;ringKey.value="huan";ringSuffix.value="huan";ringColor.value="pink";
+    renderMapping();update();status.textContent="已恢复默认设置。";
+  });
+
+  const hadSaved=loadState();
+  rememberToggle.checked=hadSaved;
+  loadRememberedSyncCode();
+  renderMapping();
+  renderPresetList();
+  update();
+  if(hadSaved) status.textContent="已自动恢复上次保存的设置。";
+})();
+</script>
+</body>
+</html>
