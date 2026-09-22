@@ -414,8 +414,8 @@
     const url=cssUrl(buildUrl(ringSuffix.value));
 
     return `[ring="${c}"] {
-  animation-name: ${animationName};
-  border-color: rgba(${preset.rgb}, 0.4);
+  animation-name: ${animationName}${imp};
+  border-color: rgba(${preset.rgb}, 0.4)${imp};
   background-image: url('${url}')${imp};
 }
 
