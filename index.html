@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>角色 CSS / 测试标签生成器 v13 Supabase</title>
+  <title>角色 CSS / 测试标签生成器 v15 Supabase</title>
   <style>
     :root{
       --bg:#f5f7fb;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;
@@ -81,6 +81,13 @@
     .ring-row span{font:12px Consolas,monospace;color:#374151}
     .ring-row input[type="text"],.ring-row select{padding:8px 9px;font-size:12px}
     .ring-row .switch{width:40px;height:22px}.ring-row .slider:before{width:16px;height:16px;top:3px;left:3px}.ring-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .portrait-box{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+    .portrait-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:12px;font-weight:800}
+    .portrait-row{display:grid;grid-template-columns:56px 92px minmax(0,1fr);gap:8px;align-items:center;margin-top:8px;padding:6px;border-radius:10px}
+    .portrait-row.off{background:#f8fafc;opacity:.62}
+    .portrait-row span{font:12px Consolas,monospace;color:#374151}
+    .portrait-row input[type="text"]{padding:8px 9px;font-size:12px}
+    .portrait-row .switch{width:40px;height:22px}.portrait-row .slider:before{width:16px;height:16px;top:3px;left:3px}.portrait-row .switch input:checked + .slider:before{transform:translateX(18px)}
     .ring-color-dot{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.1);box-shadow:0 0 8px rgba(0,0,0,.08);display:inline-block;vertical-align:middle;margin-right:6px}
     .note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:11px;padding:10px 12px;font-size:12px;line-height:1.6;margin-top:12px}
     .code{width:100%;min-height:330px;resize:vertical;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12.5px;line-height:1.65;background:#0f172a;color:#e2e8f0;border:0;border-radius:13px;padding:16px;white-space:pre;overflow:auto}
@@ -92,10 +99,13 @@
     .thumb.expr-thumb img{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:auto;min-height:100%;object-fit:cover;object-position:50% 0%;display:block}
     .thumb.cg-thumb{width:100%;aspect-ratio:4/3;border-radius:0}
     .thumb.cg-thumb img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
+    .thumb.portrait-thumb{width:100%;aspect-ratio:2/3;border-radius:0}
+    .thumb.portrait-thumb img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
+    .portrait-preview-grid{display:grid;grid-template-columns:minmax(220px,320px);gap:14px;margin-top:12px}
     .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--muted);font-size:12px;background:#fafafa}
     .meta{padding:10px 11px}.name{font-size:13px;font-weight:800;word-break:break-all}
     @media(max-width:1000px){.layout{grid-template-columns:1fr}}
-    @media(max-width:560px){.mapping-head,.map-row{grid-template-columns:48px 1fr 1fr 54px}.two{grid-template-columns:1fr}.cg-row{grid-template-columns:48px 72px 1fr}}
+    @media(max-width:560px){.mapping-head,.map-row{grid-template-columns:48px 1fr 1fr 54px}.two{grid-template-columns:1fr}.cg-row{grid-template-columns:48px 72px 1fr}.portrait-row{grid-template-columns:48px 78px 1fr}}
   </style>
 </head>
 <body>
@@ -296,6 +306,31 @@
               </select>
             </div>
           </div>
+
+          <div class="portrait-box">
+            <div class="portrait-title">
+              <span>立绘</span>
+              <span class="badge">默认关闭</span>
+            </div>
+            <div class="hint">
+              开启后生成 <code>.ncard-left nport[...]</code> 立绘 CSS；立绘直接复用上方“图片链接前缀”，并在测试 HTML 最后追加 ncard-left 标签。
+            </div>
+
+            <div id="portraitRow" class="portrait-row off">
+              <label class="switch" title="启用立绘">
+                <input id="portraitEnabled" type="checkbox">
+                <span class="slider"></span>
+              </label>
+              <span>链接尾部 →</span>
+              <input id="portraitSuffix" type="text" value="%E7%AB%8B%E7%BB%98.webp" placeholder="%E7%AB%8B%E7%BB%98.webp">
+            </div>
+
+            <div class="portrait-row">
+              <span></span>
+              <span>测试 expr →</span>
+              <input id="portraitExpr" type="text" value="battle-urgent" placeholder="battle-urgent">
+            </div>
+          </div>
         </details>
       </div>
     </aside>
@@ -317,6 +352,9 @@
 
         <div class="out-title"><span>魂环图片预览</span><span class="badge">ring</span></div>
         <div id="ringPreview" class="grid"></div>
+
+        <div class="out-title"><span>立绘预览</span><span class="badge">ncard-left</span></div>
+        <div id="portraitPreview" class="portrait-preview-grid"></div>
       </div>
     </main>
   </div>
@@ -359,7 +397,10 @@
     ringEnabled:false,
     ringKey:"huan",
     ringSuffix:"huan",
-    ringColor:"pink"
+    ringColor:"pink",
+    portraitEnabled:false,
+    portraitSuffix:"%E7%AB%8B%E7%BB%98.webp",
+    portraitExpr:"battle-urgent"
   };
 
   let mappings = defaultMappings.map(x => ({...x}));
@@ -373,8 +414,9 @@
         extInput = $("ext"), importantInput = $("important"), oralEnabled = $("oralEnabled"), oralSuffix = $("oralSuffix"),
         climaxEnabled = $("climaxEnabled"), climaxSuffix = $("climaxSuffix"),
         ringEnabled = $("ringEnabled"), ringKey = $("ringKey"), ringSuffix = $("ringSuffix"), ringColor = $("ringColor"),
+        portraitEnabled = $("portraitEnabled"), portraitSuffix = $("portraitSuffix"), portraitExpr = $("portraitExpr"),
         cssOutput = $("cssOutput"), htmlOutput = $("htmlOutput"),
-        mappingBox = $("mapping"), exprPreview = $("exprPreview"), cgPreview = $("cgPreview"), ringPreview = $("ringPreview"), status = $("status");
+        mappingBox = $("mapping"), exprPreview = $("exprPreview"), cgPreview = $("cgPreview"), ringPreview = $("ringPreview"), portraitPreview = $("portraitPreview"), status = $("status");
 
   function escAttr(v){ return String(v).replace(/\\/g,"\\\\").replace(/"/g,'\\"'); }
   function escHtmlAttr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -433,12 +475,36 @@
 }`;
   }
 
+  function buildPortraitUrl(){
+    return `${cleanBase()}${portraitSuffix.value.trim()}`;
+  }
+
+  function buildPortraitCSS(){
+    if(!portraitEnabled.checked) return "";
+    const c=escAttr(charInput.value.trim());
+    const form=cssFormPart();
+    const imp=importantInput.value==="yes" ? " !important" : "";
+    return `.ncard-left nport[char="${c}"]${form} {
+  background-image: url('${cssUrl(buildPortraitUrl())}')${imp};
+}`;
+  }
+
+  function buildPortraitTestHTML(){
+    if(!portraitEnabled.checked) return "";
+    const c=escHtmlAttr(charInput.value.trim());
+    const expr=escHtmlAttr(portraitExpr.value.trim() || "battle-urgent");
+    return `<div class="ncard-left">
+<nport char="${c}"${htmlFormPart()} expr="${expr}"></nport>
+</div>`;
+  }
+
   function getState(){
     return {
       char:charInput.value, form:formInput.value, base:baseInput.value, ext:extInput.value, important:importantInput.value,
       mappings:mappings.map(x=>({...x})), oralEnabled:oralEnabled.checked, oralSuffix:oralSuffix.value,
       climaxEnabled:climaxEnabled.checked, climaxSuffix:climaxSuffix.value,
-      ringEnabled:ringEnabled.checked, ringKey:ringKey.value, ringSuffix:ringSuffix.value, ringColor:ringColor.value
+      ringEnabled:ringEnabled.checked, ringKey:ringKey.value, ringSuffix:ringSuffix.value, ringColor:ringColor.value,
+      portraitEnabled:portraitEnabled.checked, portraitSuffix:portraitSuffix.value, portraitExpr:portraitExpr.value
     };
   }
 
@@ -498,6 +564,9 @@
     ringKey.value=s.ringKey ?? "huan";
     ringSuffix.value=s.ringSuffix ?? "huan";
     ringColor.value=ringColors[s.ringColor] ? s.ringColor : "pink";
+    portraitEnabled.checked=s.portraitEnabled===true;
+    portraitSuffix.value=s.portraitSuffix ?? "%E7%AB%8B%E7%BB%98.webp";
+    portraitExpr.value=s.portraitExpr ?? "battle-urgent";
     renderMapping();
     update();
   }
@@ -763,6 +832,9 @@
       ringKey.value=s.ringKey ?? "huan";
       ringSuffix.value=s.ringSuffix ?? "huan";
       ringColor.value=ringColors[s.ringColor] ? s.ringColor : "pink";
+      portraitEnabled.checked=s.portraitEnabled===true;
+      portraitSuffix.value=s.portraitSuffix ?? "%E7%AB%8B%E7%BB%98.webp";
+      portraitExpr.value=s.portraitExpr ?? "battle-urgent";
       return true;
     }catch(e){ return false; }
   }
@@ -776,6 +848,8 @@
     if(climaxEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}:not([type="oral"])`,buildUrl(climaxSuffix.value)));
     const ringCSS=buildRingCSS();
     if(ringCSS) rules.push(ringCSS);
+    const portraitCSS=buildPortraitCSS();
+    if(portraitCSS) rules.push(portraitCSS);
     return rules.join("\n\n");
   }
 
@@ -802,13 +876,20 @@
     if(oralEnabled.checked) lines.push(cgTag("oral"));
     if(climaxEnabled.checked) lines.push(cgTag("climax"));
     lines.push("</ntext>");
+    const portraitHTML=buildPortraitTestHTML();
+    if(portraitHTML){
+      lines.push("");
+      lines.push(portraitHTML);
+    }
     return lines.join("\n");
   }
 
   function previewCard(label,url,type="expr"){
     const card=document.createElement("div"); card.className="card";
     const thumb=document.createElement("div");
-    thumb.className=type==="cg" ? "thumb cg-thumb" : "thumb expr-thumb";
+    if(type==="cg") thumb.className="thumb cg-thumb";
+    else if(type==="portrait") thumb.className="thumb portrait-thumb";
+    else thumb.className="thumb expr-thumb";
     const img=document.createElement("img"); img.alt=label; img.loading="lazy"; img.src=url;
     const fail=document.createElement("div"); fail.className="fail"; fail.textContent="图片加载失败，请检查链接或映射尾部";
     img.addEventListener("error",()=>{img.style.display="none";fail.style.display="flex"});
@@ -838,19 +919,21 @@
   }
 
   function renderPreviews(){
-    exprPreview.innerHTML=""; cgPreview.innerHTML=""; ringPreview.innerHTML="";
+    exprPreview.innerHTML=""; cgPreview.innerHTML=""; ringPreview.innerHTML=""; portraitPreview.innerHTML="";
     activeMappings().forEach(({field,suffix})=>exprPreview.appendChild(previewCard(`${field} → ${suffix}`,buildUrl(suffix))));
     if(oralEnabled.checked) cgPreview.appendChild(previewCard(`type="oral" → ${cleanSuffix(oralSuffix.value)}`,buildUrl(oralSuffix.value),"cg"));
     if(climaxEnabled.checked) cgPreview.appendChild(previewCard(`非 oral → ${cleanSuffix(climaxSuffix.value)}`,buildUrl(climaxSuffix.value),"cg"));
     if(ringEnabled.checked) ringPreview.appendChild(previewCard(`${ringKey.value.trim() || "huan"} → ${cleanSuffix(ringSuffix.value)}`,buildUrl(ringSuffix.value),"cg"));
+    if(portraitEnabled.checked) portraitPreview.appendChild(previewCard("立绘",buildPortraitUrl(),"portrait"));
     $("oralRow").classList.toggle("off",!oralEnabled.checked);
     $("climaxRow").classList.toggle("off",!climaxEnabled.checked);
     $("ringRow").classList.toggle("off",!ringEnabled.checked);
+    $("portraitRow").classList.toggle("off",!portraitEnabled.checked);
   }
 
   function update(refreshPreview=true){
     cssOutput.value=buildCSS(); htmlOutput.value=buildTestHTML();
-    const count=activeMappings().length+(oralEnabled.checked?1:0)+(climaxEnabled.checked?1:0)+(ringEnabled.checked?1:0);
+    const count=activeMappings().length+(oralEnabled.checked?1:0)+(climaxEnabled.checked?1:0)+(ringEnabled.checked?1:0)+(portraitEnabled.checked?1:0);
     $("countBadge").textContent=`${count} 条 CSS`;
     if(refreshPreview) renderPreviews(); else { clearTimeout(update._timer); update._timer=setTimeout(renderPreviews,180); }
     saveState(); status.textContent="";
@@ -867,7 +950,7 @@
     else{ clearStored(); status.textContent="自动记忆已关闭，并已清除已保存的设置。"; }
   });
 
-  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor].forEach(el=>{
+  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor,portraitEnabled,portraitSuffix,portraitExpr].forEach(el=>{
     el.addEventListener("input",()=>update(false)); el.addEventListener("change",()=>update());
   });
 
@@ -914,6 +997,7 @@
     oralEnabled.checked=true;oralSuffix.value="oral";
     climaxEnabled.checked=true;climaxSuffix.value="climax";
     ringEnabled.checked=false;ringKey.value="huan";ringSuffix.value="huan";ringColor.value="pink";
+    portraitEnabled.checked=false;portraitSuffix.value="%E7%AB%8B%E7%BB%98.webp";portraitExpr.value="battle-urgent";
     renderMapping();update();status.textContent="已恢复默认设置。";
   });
 
