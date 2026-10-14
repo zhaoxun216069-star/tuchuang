@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>角色 CSS / 测试标签生成器 v16 REST Sync</title>
+  <title>角色 CSS / 测试标签生成器 v17 REST Sync</title>
   <style>
     :root{
       --bg:#f5f7fb;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;
@@ -749,215 +749,66 @@
       const presets=getPresets();
       const count=Object.keys(presets).length;
       if(!count) throw new Error("本地没有已保存的命名预设，请先保存至少一个预设。");
+
       setCloudStatus(`正在上传 ${count} 个预设…`);
       saveRememberedSyncCode();
+
       const {hash,headers}=await supabaseAccess();
-      headers["Prefer"]="resolution=merge-duplicates,return=representation";
-      const url=`${SUPABASE_URL}/rest/v1/css_preset_cloud?on_conflict=code_hash`;
-      const res=await fetch(url,{method:"POST",headers,body:JSON.stringify([{code_hash:hash,presets,updated_at:new Date().toISOString()}])});
-      if(!res.ok) throw new Error(await supabaseErrorText(res));
-      setCloudStatus(`上传成功：已同步 ${count} 个预设。`,`ok`);
+
+      // 先查询，避免使用 Prefer: resolution=merge-duplicates
+      // 防止 GitHub Pages -> Supabase 触发额外 CORS preflight。
+      const queryUrl=`${SUPABASE_URL}/rest/v1/css_preset_cloud?code_hash=eq.${encodeURIComponent(hash)}&select=code_hash`;
+
+      const checkRes=await fetch(queryUrl,{
+        method:"GET",
+        headers
+      });
+
+      if(!checkRes.ok){
+        throw new Error(await supabaseErrorText(checkRes));
+      }
+
+      const exists=(await checkRes.json()).length>0;
+
+      let res;
+
+      if(exists){
+        res=await fetch(
+          `${SUPABASE_URL}/rest/v1/css_preset_cloud?code_hash=eq.${encodeURIComponent(hash)}`,
+          {
+            method:"PATCH",
+            headers,
+            body:JSON.stringify({
+              presets,
+              updated_at:new Date().toISOString()
+            })
+          }
+        );
+      }else{
+        res=await fetch(
+          `${SUPABASE_URL}/rest/v1/css_preset_cloud`,
+          {
+            method:"POST",
+            headers,
+            body:JSON.stringify({
+              code_hash:hash,
+              presets,
+              updated_at:new Date().toISOString()
+            })
+          }
+        );
+      }
+
+      if(!res.ok){
+        throw new Error(await supabaseErrorText(res));
+      }
+
+      setCloudStatus(`上传成功：已同步 ${count} 个预设。`,"ok");
+
     }catch(e){
       setCloudStatus(e.message || String(e),"error");
     }
-  }
-
-  function saveState(){
-    if(!rememberToggle.checked) return;
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(getState())); }catch(e){}
-  }
-
-  function loadState(){
-    try{
-      const raw=localStorage.getItem(STORAGE_KEY);
-      if(!raw) return false;
-      const s=JSON.parse(raw);
-      charInput.value=s.char ?? defaults.char; formInput.value=s.form ?? ""; baseInput.value=s.base ?? defaults.base;
-      extInput.value=s.ext ?? "webp"; importantInput.value=s.important ?? "yes";
-      mappings=Array.isArray(s.mappings) ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",suffix:m.suffix??""})) : defaultMappings.map(x=>({...x}));
-      oralEnabled.checked=s.oralEnabled!==false; oralSuffix.value=s.oralSuffix ?? "oral";
-      climaxEnabled.checked=s.climaxEnabled!==false; climaxSuffix.value=s.climaxSuffix ?? "climax";
-      ringEnabled.checked=s.ringEnabled===true;
-      ringKey.value=s.ringKey ?? "huan";
-      ringSuffix.value=s.ringSuffix ?? "huan";
-      ringColor.value=ringColors[s.ringColor] ? s.ringColor : "pink";
-      portraitEnabled.checked=s.portraitEnabled===true;
-      portraitSuffix.value=s.portraitSuffix ?? "%E7%AB%8B%E7%BB%98.webp";
-      portraitExpr.value=s.portraitExpr ?? "battle-urgent";
-      return true;
-    }catch(e){ return false; }
-  }
-
-  function clearStored(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
-
-  function buildCSS(){
-    const c=escAttr(charInput.value.trim()), form=cssFormPart(), rules=[];
-    activeMappings().forEach(({field,suffix}) => rules.push(makeRule(`nport[char="${c}"]${form}[expr="${escAttr(field.trim())}"]`,buildUrl(suffix))));
-    if(oralEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}[type="oral"]`,buildUrl(oralSuffix.value)));
-    if(climaxEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}:not([type="oral"])`,buildUrl(climaxSuffix.value)));
-    const ringCSS=buildRingCSS();
-    if(ringCSS) rules.push(ringCSS);
-    const portraitCSS=buildPortraitCSS();
-    if(portraitCSS) rules.push(portraitCSS);
-    return rules.join("\n\n");
-  }
-
-  function nportTag(field){
-    const c=escHtmlAttr(charInput.value.trim());
-    return `<nport char="${c}"${htmlFormPart()} expr="${escHtmlAttr(field.trim())}"></nport>`;
-  }
-  function cgTag(type){
-    const c=escHtmlAttr(charInput.value.trim());
-    return `<cg char="${c}"${htmlFormPart()} type="${type}"></cg>`;
-  }
-
-  function buildTestHTML(){
-    const rows=activeMappings(), groups=[], first=rows.slice(0,5), second=rows.slice(5,9), rest=rows.slice(9);
-    if(first.length) groups.push(first); if(second.length) groups.push(second);
-    for(let i=0;i<rest.length;i+=5) groups.push(rest.slice(i,i+5));
-    const lines=["<ntext>"];
-    groups.forEach((group,index)=>{
-      lines.push("<p dlg user>");
-      if(index===0 && ringEnabled.checked) lines.push(`<nring ring="${escHtmlAttr(charInput.value.trim())}"></nring>`);
-      group.forEach(m=>lines.push(nportTag(m.field)));
-      lines.push("</p>");
-    });
-    if(oralEnabled.checked) lines.push(cgTag("oral"));
-    if(climaxEnabled.checked) lines.push(cgTag("climax"));
-    lines.push("</ntext>");
-    const portraitHTML=buildPortraitTestHTML();
-    if(portraitHTML){
-      lines.push("");
-      lines.push(portraitHTML);
-    }
-    return lines.join("\n");
-  }
-
-  function previewCard(label,url,type="expr"){
-    const card=document.createElement("div"); card.className="card";
-    const thumb=document.createElement("div");
-    if(type==="cg") thumb.className="thumb cg-thumb";
-    else if(type==="portrait") thumb.className="thumb portrait-thumb";
-    else thumb.className="thumb expr-thumb";
-    const img=document.createElement("img"); img.alt=label; img.loading="lazy"; img.src=url;
-    const fail=document.createElement("div"); fail.className="fail"; fail.textContent="图片加载失败，请检查链接或映射尾部";
-    img.addEventListener("error",()=>{img.style.display="none";fail.style.display="flex"});
-    img.addEventListener("load",()=>{img.style.display="block";fail.style.display="none"});
-    thumb.append(img,fail);
-    const meta=document.createElement("div"); meta.className="meta";
-    const name=document.createElement("div"); name.className="name"; name.textContent=label;
-    meta.append(name); card.append(thumb,meta); return card;
-  }
-
-  function renderMapping(){
-    mappingBox.innerHTML="";
-    mappings.forEach((m,index)=>{
-      const row=document.createElement("div"); row.className="map-row"+(m.enabled?"":" off");
-      const sw=document.createElement("label"); sw.className="switch"; sw.title="是否生成该字段";
-      const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=m.enabled;
-      const slider=document.createElement("span"); slider.className="slider"; sw.append(chk,slider);
-      chk.addEventListener("change",()=>{mappings[index].enabled=chk.checked; row.classList.toggle("off",!chk.checked); update();});
-      const field=document.createElement("input"); field.type="text"; field.value=m.field; field.placeholder="例如 calm";
-      field.addEventListener("input",()=>{mappings[index].field=field.value; update(false);});
-      const suffix=document.createElement("input"); suffix.type="text"; suffix.value=m.suffix; suffix.placeholder="例如 calm";
-      suffix.addEventListener("input",()=>{mappings[index].suffix=suffix.value; update(false);});
-      const del=document.createElement("button"); del.type="button"; del.className="danger mini"; del.textContent="删除";
-      del.addEventListener("click",()=>{mappings.splice(index,1); renderMapping(); update();});
-      row.append(sw,field,suffix,del); mappingBox.appendChild(row);
-    });
-  }
-
-  function renderPreviews(){
-    exprPreview.innerHTML=""; cgPreview.innerHTML=""; ringPreview.innerHTML=""; portraitPreview.innerHTML="";
-    activeMappings().forEach(({field,suffix})=>exprPreview.appendChild(previewCard(`${field} → ${suffix}`,buildUrl(suffix))));
-    if(oralEnabled.checked) cgPreview.appendChild(previewCard(`type="oral" → ${cleanSuffix(oralSuffix.value)}`,buildUrl(oralSuffix.value),"cg"));
-    if(climaxEnabled.checked) cgPreview.appendChild(previewCard(`非 oral → ${cleanSuffix(climaxSuffix.value)}`,buildUrl(climaxSuffix.value),"cg"));
-    if(ringEnabled.checked) ringPreview.appendChild(previewCard(`${ringKey.value.trim() || "huan"} → ${cleanSuffix(ringSuffix.value)}`,buildUrl(ringSuffix.value),"cg"));
-    if(portraitEnabled.checked) portraitPreview.appendChild(previewCard("立绘",buildPortraitUrl(),"portrait"));
-    $("oralRow").classList.toggle("off",!oralEnabled.checked);
-    $("climaxRow").classList.toggle("off",!climaxEnabled.checked);
-    $("ringRow").classList.toggle("off",!ringEnabled.checked);
-    $("portraitRow").classList.toggle("off",!portraitEnabled.checked);
-  }
-
-  function update(refreshPreview=true){
-    cssOutput.value=buildCSS(); htmlOutput.value=buildTestHTML();
-    const count=activeMappings().length+(oralEnabled.checked?1:0)+(climaxEnabled.checked?1:0)+(ringEnabled.checked?1:0)+(portraitEnabled.checked?1:0);
-    $("countBadge").textContent=`${count} 条 CSS`;
-    if(refreshPreview) renderPreviews(); else { clearTimeout(update._timer); update._timer=setTimeout(renderPreviews,180); }
-    saveState(); status.textContent="";
-  }
-
-  async function copyText(text,msg){
-    try{ await navigator.clipboard.writeText(text); }
-    catch{ const temp=document.createElement("textarea"); temp.value=text; temp.style.position="fixed"; temp.style.opacity="0"; document.body.appendChild(temp); temp.select(); document.execCommand("copy"); temp.remove(); }
-    status.textContent=msg;
-  }
-
-  rememberToggle.addEventListener("change",()=>{
-    if(rememberToggle.checked){ saveState(); status.textContent="自动记忆已开启，当前设置已保存到此浏览器。"; }
-    else{ clearStored(); status.textContent="自动记忆已关闭，并已清除已保存的设置。"; }
-  });
-
-  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor,portraitEnabled,portraitSuffix,portraitExpr].forEach(el=>{
-    el.addEventListener("input",()=>update(false)); el.addEventListener("change",()=>update());
-  });
-
-  $("generateSyncCodeBtn").addEventListener("click",()=>{
-    try{
-      syncCode.value=randomSyncCode();
-      saveRememberedSyncCode();
-      setCloudStatus("已生成随机同步码。你也可以改成任意非空自定义同步码。","ok");
-    }catch(e){
-      setCloudStatus(e.message || "无法生成随机同步码。","error");
-    }
-  });
-  $("pullCloudBtn").addEventListener("click",pullCloudPresets);
-  $("pushCloudBtn").addEventListener("click",pushCloudPresets);
-  showSyncCode.addEventListener("change",()=>{ syncCode.type=showSyncCode.checked ? "text" : "password"; });
-  rememberSyncCode.addEventListener("change",saveRememberedSyncCode);
-  syncCode.addEventListener("change",saveRememberedSyncCode);
-
-  $("savePresetBtn").addEventListener("click",saveNamedPreset);
-  $("loadPresetBtn").addEventListener("click",loadNamedPreset);
-  $("deletePresetBtn").addEventListener("click",deleteNamedPreset);
-  $("exportPresetsBtn").addEventListener("click",exportAllPresets);
-  $("importPresetsBtn").addEventListener("click",()=>importPresetsFile.click());
-  importPresetsFile.addEventListener("change",()=>importPresetFile(importPresetsFile.files && importPresetsFile.files[0]));
-  presetName.addEventListener("keydown",e=>{ if(e.key==="Enter") saveNamedPreset(); });
-
-  $("addMapBtn").addEventListener("click",()=>{
-    mappings.push({enabled:true,field:"new-expr",suffix:"new-image"}); renderMapping(); update();
-    const inputs=mappingBox.querySelectorAll('.map-row input[type="text"]'); if(inputs.length>=2){const target=inputs[inputs.length-2];target.focus();target.select();}
-  });
-
-  $("copyCssBtn").addEventListener("click",()=>copyText(cssOutput.value,"已复制完整 CSS。"));
-  $("copyHtmlBtn").addEventListener("click",()=>copyText(htmlOutput.value,"已复制 HTML 测试标签。"));
-
-  $("downloadBtn").addEventListener("click",()=>{
-    const blob=new Blob([cssOutput.value],{type:"text/css;charset=utf-8"}), url=URL.createObjectURL(blob), a=document.createElement("a");
-    a.href=url;a.download=`${charInput.value.trim()||"character"}.css`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    status.textContent="CSS 文件已生成。";
-  });
-
-  $("resetBtn").addEventListener("click",()=>{
-    charInput.value=defaults.char;formInput.value=defaults.form;baseInput.value=defaults.base;extInput.value=defaults.ext;importantInput.value=defaults.important;
-    mappings=defaultMappings.map(x=>({...x}));
-    oralEnabled.checked=true;oralSuffix.value="oral";
-    climaxEnabled.checked=true;climaxSuffix.value="climax";
-    ringEnabled.checked=false;ringKey.value="huan";ringSuffix.value="huan";ringColor.value="pink";
-    portraitEnabled.checked=false;portraitSuffix.value="%E7%AB%8B%E7%BB%98.webp";portraitExpr.value="battle-urgent";
-    renderMapping();update();status.textContent="已恢复默认设置。";
-  });
-
-  const hadSaved=loadState();
-  rememberToggle.checked=hadSaved;
-  loadRememberedSyncCode();
-  renderMapping();
-  renderPresetList();
-  update();
-  if(hadSaved) status.textContent="已自动恢复上次保存的设置。";
-})();
+  })();
 </script>
 </body>
 </html>
