@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>角色 CSS / 测试标签生成器 v15 Supabase</title>
+  <title>角色 CSS / 测试标签生成器 v16 REST Sync</title>
   <style>
     :root{
       --bg:#f5f7fb;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;
@@ -183,7 +183,7 @@
           </div>
 
           <div id="cloudStatus" class="cloud-status">
-            请先在 Supabase SQL Editor 执行新版 supabase_css_presets_rpc_setup.sql；GitHub Pages 可直接使用，无需 localhost。
+            GitHub Pages 可直接使用。请确保 Supabase 表 css_preset_cloud 已存在并允许 Data API 访问。
           </div>
         </div>
       </div>
@@ -712,8 +712,8 @@
       const body=await res.json();
       detail=body.message || body.details || body.hint || JSON.stringify(body);
     }catch(e){}
-    if(res.status===404) return "找不到云端 RPC。请先执行新版 supabase_css_presets_rpc_setup.sql。";
-    if(res.status===401 || res.status===403) return "Supabase 拒绝访问，请检查新版 RPC SQL 与项目 Publishable Key。";
+    if(res.status===404) return "找不到云端表或 Data API 未开放，请检查 css_preset_cloud 表设置。";
+    if(res.status===401 || res.status===403) return "Supabase 拒绝访问，请检查表权限与 RLS 设置。";
     return `Supabase 请求失败（HTTP ${res.status}）${detail ? "：" + detail : ""}`;
   }
 
@@ -721,52 +721,26 @@
     try{
       setCloudStatus("正在从云端拉取预设…");
       saveRememberedSyncCode();
-
       const {hash,headers}=await supabaseAccess();
-      const url=`${SUPABASE_URL}/rest/v1/rpc/get_css_presets`;
-
-      const res=await fetch(url,{
-        method:"POST",
-        headers,
-        body:JSON.stringify({p_code_hash:hash})
-      });
-
+      const url=`${SUPABASE_URL}/rest/v1/css_preset_cloud?code_hash=eq.${encodeURIComponent(hash)}&select=presets,updated_at`;
+      const res=await fetch(url,{method:"GET",headers});
       if(!res.ok) throw new Error(await supabaseErrorText(res));
-
       const rows=await res.json();
-
       if(!Array.isArray(rows) || !rows.length){
-        setCloudStatus("这个同步码还没有云端数据。可以先点击“上传全部预设到云端”。","error");
+        setCloudStatus("这个同步码还没有云端预设。可以先上传。","error");
         return;
       }
-
-      const incoming=
-        rows[0].presets &&
-        typeof rows[0].presets==="object" &&
-        !Array.isArray(rows[0].presets)
-          ? rows[0].presets
-          : {};
-
+      const incoming=rows[0].presets || {};
       if(cloudPullMode.value==="replace"){
         if(!setPresets(incoming)) return;
       }else{
         if(!setPresets({...getPresets(),...incoming})) return;
       }
-
       renderPresetList();
-
       const count=Object.keys(incoming).length;
-      const when=rows[0].updated_at
-        ? new Date(rows[0].updated_at).toLocaleString()
-        : "未知";
-
-      setCloudStatus(`拉取成功：云端 ${count} 个预设；更新时间 ${when}。`,"ok");
+      setCloudStatus(`拉取成功：云端 ${count} 个预设。更新时间 ${rows[0].updated_at ? new Date(rows[0].updated_at).toLocaleString() : "未知"}。`,"ok");
     }catch(e){
-      setCloudStatus(
-        (e && e.message ? e.message : String(e)) +
-        "；如果页面部署在 GitHub Pages，请按 F12 → Network 查看 /rpc/get_css_presets 请求。",
-        "error"
-      );
+      setCloudStatus(e.message || String(e),"error");
     }
   }
 
@@ -774,42 +748,17 @@
     try{
       const presets=getPresets();
       const count=Object.keys(presets).length;
-
-      if(!count){
-        throw new Error("本地没有已保存的命名预设，请先保存至少一个预设。");
-      }
-
+      if(!count) throw new Error("本地没有已保存的命名预设，请先保存至少一个预设。");
       setCloudStatus(`正在上传 ${count} 个预设…`);
       saveRememberedSyncCode();
-
       const {hash,headers}=await supabaseAccess();
-      const url=`${SUPABASE_URL}/rest/v1/rpc/save_css_presets`;
-
-      const res=await fetch(url,{
-        method:"POST",
-        headers,
-        body:JSON.stringify({
-          p_code_hash:hash,
-          p_presets:presets
-        })
-      });
-
+      headers["Prefer"]="resolution=merge-duplicates,return=representation";
+      const url=`${SUPABASE_URL}/rest/v1/css_preset_cloud?on_conflict=code_hash`;
+      const res=await fetch(url,{method:"POST",headers,body:JSON.stringify([{code_hash:hash,presets,updated_at:new Date().toISOString()}])});
       if(!res.ok) throw new Error(await supabaseErrorText(res));
-
-      const rows=await res.json();
-
-      const when=
-        rows && rows[0] && rows[0].updated_at
-          ? new Date(rows[0].updated_at).toLocaleString()
-          : new Date().toLocaleString();
-
-      setCloudStatus(`上传成功：已同步 ${count} 个预设；${when}。`,"ok");
+      setCloudStatus(`上传成功：已同步 ${count} 个预设。`,`ok`);
     }catch(e){
-      setCloudStatus(
-        (e && e.message ? e.message : String(e)) +
-        "；如果页面部署在 GitHub Pages，请按 F12 → Network 查看 /rpc/save_css_presets 请求。",
-        "error"
-      );
+      setCloudStatus(e.message || String(e),"error");
     }
   }
 
