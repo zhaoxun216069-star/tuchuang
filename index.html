@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>角色 CSS / 测试标签生成器 v18 Supabase</title>
+  <title>角色 CSS / 测试标签生成器 v21</title>
   <style>
     :root{
       --bg:#f5f7fb;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;
@@ -54,6 +54,17 @@
     .cloud-ok{color:#059669}.cloud-error{color:#dc2626}
     .top-tools{margin:0 0 20px}
     .top-tools .panel-bd{padding:18px 20px}
+    .preset-details{margin:0 0 20px;padding:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+    .preset-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;cursor:pointer;font-size:15px;font-weight:800;user-select:none}
+    .preset-details>summary::-webkit-details-marker{display:none}
+    .preset-details[open]>summary{border-bottom:1px solid var(--line);background:linear-gradient(135deg,#fff 0%,#f8f9ff 100%)}
+    .preset-summary-right{display:flex;align-items:center;gap:10px}
+    .preset-chevron{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:8px;background:#f3f4f6;color:#64748b;font-size:17px;transition:transform .18s ease}
+    .preset-details[open] .preset-chevron{transform:rotate(180deg)}
+    .optional-link-field{margin:9px 0 12px;padding:10px 12px;border:1px dashed #c7d2fe;border-radius:11px;background:#f8faff}
+    .optional-link-field[hidden]{display:none}
+    .optional-link-field label{margin-bottom:6px}
+    .optional-link-field input{font-size:12px;padding:9px 10px}
     .top-tools-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
     .top-tool-block{min-width:0}
     .top-tool-block + .top-tool-block{border-left:1px solid var(--line);padding-left:18px}
@@ -67,10 +78,17 @@
     .slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s}
     .slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
     .switch input:checked + .slider{background:var(--accent)}.switch input:checked + .slider:before{transform:translateX(20px)}
-    .mapping-head,.map-row{display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,1fr) 64px;gap:8px;align-items:center}
+    .mapping-head,.map-row{display:grid;grid-template-columns:48px minmax(0,1fr) 64px;gap:8px;align-items:start}
     .mapping-head{color:var(--muted);font-size:11px;font-weight:800;padding:12px 1px 6px}.mapping{display:grid;gap:8px}
-    .map-row{padding:6px;border:1px solid transparent;border-radius:10px}.map-row.off{background:#f8fafc;opacity:.62}
-    .map-row input[type="text"]{padding:8px 9px;font-size:12px}.map-row .switch{width:40px;height:22px}.map-row .slider:before{width:16px;height:16px;top:3px;left:3px}.map-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .map-row{padding:7px 6px;border:1px solid transparent;border-radius:10px}.map-row.off{background:#f8fafc;opacity:.62}
+    .map-row input[type="text"]{padding:8px 9px;font-size:12px}.map-row .switch{width:40px;height:22px;margin-top:4px}.map-row .slider:before{width:16px;height:16px;top:3px;left:3px}.map-row .switch input:checked + .slider:before{transform:translateX(18px)}
+    .map-field-wrap{min-width:0;display:grid;gap:7px}
+    .map-field-wrap>.map-expr-input{width:100%}
+    .map-url-wrap{display:grid;gap:4px;padding:7px 9px;border:1px dashed #c7d2fe;border-radius:9px;background:#f8faff}
+    .map-url-wrap label{font-size:10px;color:#64748b;font-weight:700}
+    .map-url-wrap input{width:100%;background:#fff}
+    .map-url-wrap .map-url-hint{font-size:10px;color:#94a3b8;line-height:1.35}
+    @media(max-width:560px){.map-row{grid-template-columns:42px minmax(0,1fr) 54px}}
     .cg-row{display:grid;grid-template-columns:56px 82px minmax(0,1fr);gap:8px;align-items:center;margin-top:8px;padding:6px;border-radius:10px}
     .cg-row.off{background:#f8fafc;opacity:.62}.cg-row span{font:12px Consolas,monospace;color:#374151}.cg-row input[type="text"]{padding:8px 9px;font-size:12px}
     .cg-row .switch{width:40px;height:22px}.cg-row .slider:before{width:16px;height:16px;top:3px;left:3px}.cg-row .switch input:checked + .slider:before{transform:translateX(18px)}
@@ -105,22 +123,22 @@
     .fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--muted);font-size:12px;background:#fafafa}
     .meta{padding:10px 11px}.name{font-size:13px;font-weight:800;word-break:break-all}
     @media(max-width:1000px){.layout{grid-template-columns:1fr}}
-    @media(max-width:560px){.mapping-head,.map-row{grid-template-columns:48px 1fr 1fr 54px}.two{grid-template-columns:1fr}.cg-row{grid-template-columns:48px 72px 1fr}.portrait-row{grid-template-columns:48px 78px 1fr}}
+    @media(max-width:560px){.mapping-head,.map-row{grid-template-columns:42px minmax(0,1fr) 54px}.two{grid-template-columns:1fr}.cg-row{grid-template-columns:48px 72px 1fr}.portrait-row{grid-template-columns:48px 78px 1fr}}
   </style>
 </head>
 <body>
 <div class="wrap">
   <section class="hero">
     <h1>角色 CSS / HTML 测试标签生成器</h1>
-    <p class="desc">支持自动记忆、字段开关、自定义 expr → 图片尾部映射、CSS / HTML 测试标签生成和图片预览。</p>
+    <p class="desc">支持自动记忆、预设云同步、默认 expr 同名图片尾部、独立链接开关、默认 calm 表情和图片预览。</p>
   </section>
 
 
-  <section class="panel top-tools">
-    <div class="panel-hd">
+  <details class="panel top-tools preset-details">
+    <summary class="panel-hd">
       <span>预设与云端同步</span>
-      <span class="badge">快捷管理</span>
-    </div>
+      <span class="preset-summary-right"><span class="badge">快捷管理</span><span class="preset-chevron">⌄</span></span>
+    </summary>
     <div class="panel-bd">
       <div class="top-tools-grid">
         <div class="top-tool-block">
@@ -188,7 +206,7 @@
         </div>
       </div>
     </div>
-  </section>
+  </details>
 
   <div class="layout">
     <aside class="panel">
@@ -246,9 +264,15 @@
 
         <details open>
           <summary>字段映射与生成开关</summary>
-          <div class="hint">关闭某一字段后，它不会出现在 CSS、HTML 测试标签和图片预览中，但映射内容仍保留。</div>
+          <div class="hint">关闭某一字段后，它不会出现在 CSS、HTML 测试标签和图片预览中。默认图片链接尾部直接使用 expr 字段，不再重复填写。</div>
 
-          <div class="mapping-head"><span>启用</span><span>expr 字段</span><span>链接尾部</span><span></span></div>
+
+          <label class="tiny-check">
+            <input id="exprSeparateLinkEnabled" type="checkbox">
+            表情图片使用独立链接（开启后可为每个 expr 单独填写完整 URL）
+          </label>
+
+          <div class="mapping-head"><span>启用</span><span>expr 字段</span><span></span></div>
           <div id="mapping" class="mapping"></div>
 
           <div class="actions"><button class="ghost mini" id="addMapBtn">＋ 新增字段</button></div>
@@ -313,7 +337,15 @@
               <span class="badge">默认关闭</span>
             </div>
             <div class="hint">
-              开启后生成 <code>.ncard-left nport[...]</code> 立绘 CSS；立绘直接复用上方“图片链接前缀”，并在测试 HTML 最后追加 ncard-left 标签。
+              开启后生成 <code>.ncard-left nport[...]</code> 立绘 CSS，并在测试 HTML 最后追加 ncard-left 标签。默认复用上方公共链接前缀。
+            </div>
+            <label class="tiny-check">
+              <input id="portraitSeparateBaseEnabled" type="checkbox">
+              立绘使用独立链接前缀（默认复用公共前缀）
+            </label>
+            <div id="portraitBaseWrap" class="optional-link-field" hidden>
+              <label for="portraitBase">立绘独立链接前缀</label>
+              <input id="portraitBase" type="text" placeholder="留空则继续使用上方公共前缀">
             </div>
 
             <div id="portraitRow" class="portrait-row off">
@@ -369,18 +401,18 @@
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_QVsFpzJbK4EJzDaMmIIXSQ_YsdOzyFF";
 
   const defaultMappings = [
-    {enabled:true, field:"calm", suffix:"calm"},
-    {enabled:true, field:"angry", suffix:"angry"},
-    {enabled:true, field:"happy", suffix:"happy"},
-    {enabled:true, field:"shy", suffix:"shy"},
-    {enabled:true, field:"awkward", suffix:"awkward"},
-    {enabled:true, field:"surprise", suffix:"surprise"},
-    {enabled:true, field:"cry", suffix:"cry"},
-    {enabled:true, field:"confused", suffix:"confused"},
-    {enabled:true, field:"touched", suffix:"touched"},
-    {enabled:true, field:"battle-calm", suffix:"battle-calm"},
-    {enabled:true, field:"battle-urgent", suffix:"battle-calm"},
-    {enabled:true, field:"hurt", suffix:"hurt"}
+    {enabled:true, field:"calm"},
+    {enabled:true, field:"angry"},
+    {enabled:true, field:"happy"},
+    {enabled:true, field:"shy"},
+    {enabled:true, field:"awkward"},
+    {enabled:true, field:"surprise"},
+    {enabled:true, field:"cry"},
+    {enabled:true, field:"confused"},
+    {enabled:true, field:"touched"},
+    {enabled:true, field:"battle-calm"},
+    {enabled:true, field:"battle-urgent"},
+    {enabled:true, field:"hurt"}
   ];
 
   const defaults = {
@@ -400,10 +432,14 @@
     ringColor:"pink",
     portraitEnabled:false,
     portraitSuffix:"%E7%AB%8B%E7%BB%98.webp",
-    portraitExpr:"battle-urgent"
+    portraitExpr:"battle-urgent",
+
+     exprSeparateLinkEnabled:false,
+     portraitSeparateBaseEnabled:false,
+     portraitBase:""
   };
 
-  let mappings = defaultMappings.map(x => ({...x}));
+  let mappings = defaultMappings.map(x => ({...x,imageUrl:""}));
   const $ = id => document.getElementById(id);
 
   const rememberToggle = $("rememberToggle"),
@@ -415,6 +451,8 @@
         climaxEnabled = $("climaxEnabled"), climaxSuffix = $("climaxSuffix"),
         ringEnabled = $("ringEnabled"), ringKey = $("ringKey"), ringSuffix = $("ringSuffix"), ringColor = $("ringColor"),
         portraitEnabled = $("portraitEnabled"), portraitSuffix = $("portraitSuffix"), portraitExpr = $("portraitExpr"),
+        exprSeparateLinkEnabled = $("exprSeparateLinkEnabled"),
+        portraitSeparateBaseEnabled = $("portraitSeparateBaseEnabled"), portraitBaseInput = $("portraitBase"),
         cssOutput = $("cssOutput"), htmlOutput = $("htmlOutput"),
         mappingBox = $("mapping"), exprPreview = $("exprPreview"), cgPreview = $("cgPreview"), ringPreview = $("ringPreview"), portraitPreview = $("portraitPreview"), status = $("status");
 
@@ -422,12 +460,17 @@
   function escHtmlAttr(v){ return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function cleanBase(){ return baseInput.value.trim(); }
   function cleanSuffix(v){ return String(v || "").trim(); }
-  function buildUrl(suffix){ return `${cleanBase()}${cleanSuffix(suffix)}.${extInput.value}`; }
+  function buildUrl(suffix, baseOverride=""){ const base=String(baseOverride || cleanBase()).trim(); return `${base}${cleanSuffix(suffix)}.${extInput.value}`; }
+  function mappingImageSuffix(m){ return String(m.field || "").trim(); }
+  function buildExprUrl(m){
+    const customUrl=exprSeparateLinkEnabled.checked ? String(m.imageUrl || "").trim() : "";
+    return customUrl || buildUrl(mappingImageSuffix(m));
+  }
   function cssUrl(url){ return url.replace(/'/g,"%27"); }
   function cssFormPart(){ const f=formInput.value.trim(); return f ? `[form="${escAttr(f)}"]` : ""; }
   function htmlFormPart(){ const f=formInput.value.trim(); return f ? ` form="${escHtmlAttr(f)}"` : ""; }
   function makeRule(selector,url){ const imp=importantInput.value==="yes"?"!important":""; return `${selector}{background-image:url('${cssUrl(url)}')${imp}}`; }
-  function activeMappings(){ return mappings.filter(m => m.enabled && m.field.trim() && m.suffix.trim()); }
+  function activeMappings(){ return mappings.filter(m => m.enabled && String(m.field || "").trim()); }
 
   const ringColors = {
     pink:   {label:"pink",   rgb:"255, 182, 193"},
@@ -476,8 +519,9 @@
   }
 
   function buildPortraitUrl(){
-    return `${cleanBase()}${portraitSuffix.value.trim()}`;
-  }
+     const base=portraitSeparateBaseEnabled.checked ? portraitBaseInput.value.trim() : "";
+     return `${base || cleanBase()}${portraitSuffix.value.trim()}`;
+   }
 
   function buildPortraitCSS(){
     if(!portraitEnabled.checked) return "";
@@ -504,8 +548,10 @@
       mappings:mappings.map(x=>({...x})), oralEnabled:oralEnabled.checked, oralSuffix:oralSuffix.value,
       climaxEnabled:climaxEnabled.checked, climaxSuffix:climaxSuffix.value,
       ringEnabled:ringEnabled.checked, ringKey:ringKey.value, ringSuffix:ringSuffix.value, ringColor:ringColor.value,
-      portraitEnabled:portraitEnabled.checked, portraitSuffix:portraitSuffix.value, portraitExpr:portraitExpr.value
-    };
+        portraitEnabled:portraitEnabled.checked, portraitSuffix:portraitSuffix.value, portraitExpr:portraitExpr.value,
+        exprSeparateLinkEnabled:exprSeparateLinkEnabled.checked,
+        portraitSeparateBaseEnabled:portraitSeparateBaseEnabled.checked, portraitBase:portraitBaseInput.value
+      };
   }
 
   function getPresets(){
@@ -554,8 +600,8 @@
     extInput.value=s.ext ?? "webp";
     importantInput.value=s.important ?? "yes";
     mappings=Array.isArray(s.mappings)
-      ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",suffix:m.suffix??""}))
-      : defaultMappings.map(x=>({...x}));
+      ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",imageUrl:m.imageUrl??""}))
+      : defaultMappings.map(x=>({...x,imageUrl:""}));
     oralEnabled.checked=s.oralEnabled!==false;
     oralSuffix.value=s.oralSuffix ?? "oral";
     climaxEnabled.checked=s.climaxEnabled!==false;
@@ -567,6 +613,10 @@
     portraitEnabled.checked=s.portraitEnabled===true;
     portraitSuffix.value=s.portraitSuffix ?? "%E7%AB%8B%E7%BB%98.webp";
     portraitExpr.value=s.portraitExpr ?? "battle-urgent";
+    exprSeparateLinkEnabled.checked=s.exprSeparateLinkEnabled===true;
+    portraitSeparateBaseEnabled.checked=s.portraitSeparateBaseEnabled===true;
+    portraitBaseInput.value=s.portraitBase ?? "";
+    syncLinkOptionFields();
     renderMapping();
     update();
   }
@@ -847,7 +897,7 @@
       const s=JSON.parse(raw);
       charInput.value=s.char ?? defaults.char; formInput.value=s.form ?? ""; baseInput.value=s.base ?? defaults.base;
       extInput.value=s.ext ?? "webp"; importantInput.value=s.important ?? "yes";
-      mappings=Array.isArray(s.mappings) ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",suffix:m.suffix??""})) : defaultMappings.map(x=>({...x}));
+      mappings=Array.isArray(s.mappings) ? s.mappings.map(m=>({enabled:m.enabled!==false,field:m.field??"",imageUrl:m.imageUrl??""})) : defaultMappings.map(x=>({...x,imageUrl:""}));
       oralEnabled.checked=s.oralEnabled!==false; oralSuffix.value=s.oralSuffix ?? "oral";
       climaxEnabled.checked=s.climaxEnabled!==false; climaxSuffix.value=s.climaxSuffix ?? "climax";
       ringEnabled.checked=s.ringEnabled===true;
@@ -857,6 +907,9 @@
       portraitEnabled.checked=s.portraitEnabled===true;
       portraitSuffix.value=s.portraitSuffix ?? "%E7%AB%8B%E7%BB%98.webp";
       portraitExpr.value=s.portraitExpr ?? "battle-urgent";
+    exprSeparateLinkEnabled.checked=s.exprSeparateLinkEnabled===true;
+      portraitSeparateBaseEnabled.checked=s.portraitSeparateBaseEnabled===true;
+      portraitBaseInput.value=s.portraitBase ?? "";
       return true;
     }catch(e){ return false; }
   }
@@ -865,7 +918,11 @@
 
   function buildCSS(){
     const c=escAttr(charInput.value.trim()), form=cssFormPart(), rules=[];
-    activeMappings().forEach(({field,suffix}) => rules.push(makeRule(`nport[char="${c}"]${form}[expr="${escAttr(field.trim())}"]`,buildUrl(suffix))));
+    activeMappings().forEach(m => {
+       const field=m.field.trim();
+       const exprSelector=field==="calm" ? "" : `[expr="${escAttr(field)}"]`;
+       rules.push(makeRule(`[char="${c}"]${form}${exprSelector}`,buildExprUrl(m)));
+     });
     if(oralEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}[type="oral"]`,buildUrl(oralSuffix.value)));
     if(climaxEnabled.checked) rules.push(makeRule(`cg[char="${c}"]${form}:not([type="oral"])`,buildUrl(climaxSuffix.value)));
     const ringCSS=buildRingCSS();
@@ -922,27 +979,90 @@
     meta.append(name); card.append(thumb,meta); return card;
   }
 
+  function syncLinkOptionFields(){
+     $("portraitBaseWrap").hidden=!portraitSeparateBaseEnabled.checked;
+   }
+
   function renderMapping(){
     mappingBox.innerHTML="";
+    const head=document.querySelector(".mapping-head");
+    head.innerHTML="<span>启用</span><span>expr 字段</span><span></span>";
+
     mappings.forEach((m,index)=>{
-      const row=document.createElement("div"); row.className="map-row"+(m.enabled?"":" off");
-      const sw=document.createElement("label"); sw.className="switch"; sw.title="是否生成该字段";
-      const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=m.enabled;
-      const slider=document.createElement("span"); slider.className="slider"; sw.append(chk,slider);
-      chk.addEventListener("change",()=>{mappings[index].enabled=chk.checked; row.classList.toggle("off",!chk.checked); update();});
-      const field=document.createElement("input"); field.type="text"; field.value=m.field; field.placeholder="例如 calm";
-      field.addEventListener("input",()=>{mappings[index].field=field.value; update(false);});
-      const suffix=document.createElement("input"); suffix.type="text"; suffix.value=m.suffix; suffix.placeholder="例如 calm";
-      suffix.addEventListener("input",()=>{mappings[index].suffix=suffix.value; update(false);});
-      const del=document.createElement("button"); del.type="button"; del.className="danger mini"; del.textContent="删除";
-      del.addEventListener("click",()=>{mappings.splice(index,1); renderMapping(); update();});
-      row.append(sw,field,suffix,del); mappingBox.appendChild(row);
+      const row=document.createElement("div");
+      row.className="map-row"+(m.enabled?"":" off");
+
+      const sw=document.createElement("label");
+      sw.className="switch";
+      sw.title="是否生成该字段";
+      const chk=document.createElement("input");
+      chk.type="checkbox";
+      chk.checked=m.enabled;
+      const slider=document.createElement("span");
+      slider.className="slider";
+      sw.append(chk,slider);
+      chk.addEventListener("change",()=>{
+        mappings[index].enabled=chk.checked;
+        row.classList.toggle("off",!chk.checked);
+        update();
+      });
+
+      const fieldWrap=document.createElement("div");
+      fieldWrap.className="map-field-wrap";
+
+      const field=document.createElement("input");
+      field.className="map-expr-input";
+      field.type="text";
+      field.value=m.field;
+      field.placeholder="例如 calm";
+      field.addEventListener("input",()=>{
+        mappings[index].field=field.value;
+        update(false);
+      });
+      fieldWrap.appendChild(field);
+
+      if(exprSeparateLinkEnabled.checked){
+        const urlWrap=document.createElement("div");
+        urlWrap.className="map-url-wrap";
+
+        const urlLabel=document.createElement("label");
+        urlLabel.textContent="该表情的独立图片链接（完整 URL；留空使用默认链接）";
+
+        const urlInput=document.createElement("input");
+        urlInput.type="text";
+        urlInput.value=m.imageUrl || "";
+        urlInput.placeholder=`留空：公共前缀 + ${m.field || "expr"}.${extInput.value || "webp"}`;
+        urlInput.addEventListener("input",()=>{
+          mappings[index].imageUrl=urlInput.value;
+          update(false);
+        });
+
+        const hint=document.createElement("div");
+        hint.className="map-url-hint";
+        hint.textContent="填写后仅此表情使用该链接；留空则自动按 expr 字段拼接。";
+
+        urlWrap.append(urlLabel,urlInput,hint);
+        fieldWrap.appendChild(urlWrap);
+      }
+
+      const del=document.createElement("button");
+      del.type="button";
+      del.className="danger mini";
+      del.textContent="删除";
+      del.addEventListener("click",()=>{
+        mappings.splice(index,1);
+        renderMapping();
+        update();
+      });
+
+      row.append(sw,fieldWrap,del);
+      mappingBox.appendChild(row);
     });
   }
 
   function renderPreviews(){
     exprPreview.innerHTML=""; cgPreview.innerHTML=""; ringPreview.innerHTML=""; portraitPreview.innerHTML="";
-    activeMappings().forEach(({field,suffix})=>exprPreview.appendChild(previewCard(`${field} → ${suffix}`,buildUrl(suffix))));
+    activeMappings().forEach(m=>exprPreview.appendChild(previewCard(m.field,buildExprUrl(m))));
     if(oralEnabled.checked) cgPreview.appendChild(previewCard(`type="oral" → ${cleanSuffix(oralSuffix.value)}`,buildUrl(oralSuffix.value),"cg"));
     if(climaxEnabled.checked) cgPreview.appendChild(previewCard(`非 oral → ${cleanSuffix(climaxSuffix.value)}`,buildUrl(climaxSuffix.value),"cg"));
     if(ringEnabled.checked) ringPreview.appendChild(previewCard(`${ringKey.value.trim() || "huan"} → ${cleanSuffix(ringSuffix.value)}`,buildUrl(ringSuffix.value),"cg"));
@@ -972,9 +1092,15 @@
     else{ clearStored(); status.textContent="自动记忆已关闭，并已清除已保存的设置。"; }
   });
 
-  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor,portraitEnabled,portraitSuffix,portraitExpr].forEach(el=>{
+  [charInput,formInput,baseInput,extInput,importantInput,oralEnabled,oralSuffix,climaxEnabled,climaxSuffix,ringEnabled,ringKey,ringSuffix,ringColor,portraitEnabled,portraitSuffix,portraitExpr,portraitBaseInput].forEach(el=>{
     el.addEventListener("input",()=>update(false)); el.addEventListener("change",()=>update());
   });
+
+  exprSeparateLinkEnabled.addEventListener("change",()=>{
+    renderMapping();
+    update();
+  });
+  portraitSeparateBaseEnabled.addEventListener("change",()=>{syncLinkOptionFields();update();});
 
   $("generateSyncCodeBtn").addEventListener("click",()=>{
     try{
@@ -1000,8 +1126,12 @@
   presetName.addEventListener("keydown",e=>{ if(e.key==="Enter") saveNamedPreset(); });
 
   $("addMapBtn").addEventListener("click",()=>{
-    mappings.push({enabled:true,field:"new-expr",suffix:"new-image"}); renderMapping(); update();
-    const inputs=mappingBox.querySelectorAll('.map-row input[type="text"]'); if(inputs.length>=2){const target=inputs[inputs.length-2];target.focus();target.select();}
+    mappings.push({enabled:true,field:"new-expr",imageUrl:""});
+    renderMapping();
+    update();
+    const rows=mappingBox.querySelectorAll(".map-row");
+    const target=rows[rows.length-1]?.querySelector(".map-expr-input");
+    if(target){target.focus();target.select();}
   });
 
   $("copyCssBtn").addEventListener("click",()=>copyText(cssOutput.value,"已复制完整 CSS。"));
@@ -1015,17 +1145,20 @@
 
   $("resetBtn").addEventListener("click",()=>{
     charInput.value=defaults.char;formInput.value=defaults.form;baseInput.value=defaults.base;extInput.value=defaults.ext;importantInput.value=defaults.important;
-    mappings=defaultMappings.map(x=>({...x}));
+    mappings=defaultMappings.map(x=>({...x,imageUrl:""}));
     oralEnabled.checked=true;oralSuffix.value="oral";
     climaxEnabled.checked=true;climaxSuffix.value="climax";
     ringEnabled.checked=false;ringKey.value="huan";ringSuffix.value="huan";ringColor.value="pink";
     portraitEnabled.checked=false;portraitSuffix.value="%E7%AB%8B%E7%BB%98.webp";portraitExpr.value="battle-urgent";
-    renderMapping();update();status.textContent="已恢复默认设置。";
+    exprSeparateLinkEnabled.checked=false;
+    portraitSeparateBaseEnabled.checked=false;portraitBaseInput.value="";
+    syncLinkOptionFields();renderMapping();update();status.textContent="已恢复默认设置。";
   });
 
   const hadSaved=loadState();
   rememberToggle.checked=hadSaved;
   loadRememberedSyncCode();
+  syncLinkOptionFields();
   renderMapping();
   renderPresetList();
   update();
